@@ -399,6 +399,7 @@ export default function QueueProvider({ children }: { children?: React.ReactNode
 
         const trackItem = convertToTrackItem(data);
         loadTracks([trackItem]);
+        await TrackPlayer.seek(0);
         TrackPlayer.play();
 
         setNowPlaying(data);
@@ -419,6 +420,7 @@ export default function QueueProvider({ children }: { children?: React.ReactNode
         if (initialIndex > 0) {
             await TrackPlayer.skipToIndex(initialIndex);
         }
+        await TrackPlayer.seek(0);
         TrackPlayer.play();
 
         setNowPlaying(itemsCopy[initialIndex]);
