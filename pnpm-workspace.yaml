@@ -1,0 +1,4 @@
+allowBuilds:
+  react-native-nitro-player: true
+  react-native-nitro-modules: true
+  react-native-reanimated: true

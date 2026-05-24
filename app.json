@@ -90,6 +90,13 @@
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "4385fd44-7a6b-4ed1-ad94-47cabf19f102"
+      }
+    },
+    "owner": "ajsevillano"
   }
 }
