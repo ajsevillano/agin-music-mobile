@@ -1,5 +1,6 @@
 import ActionIcon from '@/lib/components/ActionIcon';
 import Cover from '@/lib/components/Cover';
+import SkipSwipe from '@/lib/components/SkipSwipe';
 import NowPlayingActions from '@/lib/components/nowPlaying/NowPlayingActions';
 import NowPlayingSlider from '@/lib/components/nowPlaying/NowPlayingSlider';
 import Title from '@/lib/components/Title';
@@ -94,7 +95,17 @@ export default function MainTab() {
     return (
         <View style={styles.container}>
             <View style={styles.cover}>
-                <Cover source={{ uri: cover.generateUrl(nowPlaying.coverArt ?? '') }} cacheKey={nowPlaying.coverArt ? `${nowPlaying.coverArt}-full` : 'empty-full'} />
+                <SkipSwipe
+                    width={width - 60}
+                    height={width - 60}
+                    renderItem={(item) => (
+                        <Cover
+                            source={{ uri: cover.generateUrl(item.coverArt ?? '') }}
+                            cacheKey={item.coverArt ? `${item.coverArt}-full` : 'empty-full'}
+                        />
+                    )}
+                    style={{ alignSelf: 'center' }}
+                />
             </View>
             <View>
                 <View style={styles.metadata}>

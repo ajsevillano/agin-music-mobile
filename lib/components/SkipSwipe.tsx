@@ -6,11 +6,12 @@ import { ReactElement, useEffect, useRef } from 'react';
 
 export type SkipSwipeProps = {
     width: number;
+    height?: number;
     renderItem: (item: Child) => ReactElement;
     style?: ViewStyle;
 };
 
-export default function SkipSwipe({ width, renderItem, style }: SkipSwipeProps) {
+export default function SkipSwipe({ width, height, renderItem, style }: SkipSwipeProps) {
     const queue = useQueue();
 
     const carosuelRef = useRef<ICarouselInstance>(null);
@@ -26,6 +27,7 @@ export default function SkipSwipe({ width, renderItem, style }: SkipSwipeProps) 
             data={queue.queue ?? []}
             windowSize={5}
             width={width}
+            height={height}
             renderItem={({ index }) => {
                 const item = queue.queue?.[index];
                 if (!item) return <View />;
@@ -37,6 +39,7 @@ export default function SkipSwipe({ width, renderItem, style }: SkipSwipeProps) 
             }}
             onConfigurePanGesture={(gesture) => {
                 gesture.activeOffsetX([-20, 20]);
+                gesture.failOffsetY([-10, 10]);
             }}
             style={style}
         />
