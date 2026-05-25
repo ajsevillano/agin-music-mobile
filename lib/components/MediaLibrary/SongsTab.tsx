@@ -1,13 +1,14 @@
-import React, { useContext, useEffect, useMemo } from 'react';
+import React, { useCallback, useContext, useEffect, useMemo } from 'react';
 import MediaLibraryList, { LibLayout } from '@lib/components/MediaLibraryList';
 import { TMediaLibItem } from '@lib/components/MediaLibraryList/Item';
-import { useCoverBuilder, useHomeItemActions, useMemoryCache } from '@/lib/hooks';
+import { useCoverBuilder, useHomeItemActions, useMemoryCache, useQueue } from '@/lib/hooks';
 
 export function SongsTab() {
     const cache = useMemoryCache();
     const cover = useCoverBuilder();
+    const queue = useQueue();
 
-    const { press, longPress } = useHomeItemActions();
+    const { longPress } = useHomeItemActions();
 
     const layout = useContext(LibLayout);
 
@@ -19,6 +20,16 @@ export function SongsTab() {
         coverCacheKey: `${s.coverArt}-${layout == 'grid' ? '300x300' : '128x128'}`,
         type: 'track',
     })), [cache.cache.allSongs, cover]);
+
+    const press = useCallback((item: TMediaLibItem) => {
+        const songs = cache.cache.allSongs;
+        const index = songs.findIndex(s => s.id === item.id);
+        if (index < 0) return;
+        queue.replace(songs, {
+            initialIndex: index,
+            source: { source: 'library', sourceName: 'Library' },
+        });
+    }, [cache.cache.allSongs, queue.replace]);
 
     useEffect(() => {
         if (cache.cache.allSongs.length === 0) {

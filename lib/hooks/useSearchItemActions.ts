@@ -3,9 +3,11 @@ import { useQueue, useSearchHistory } from '@lib/hooks';
 import { TMediaLibItem } from '@lib/components/MediaLibraryList/Item';
 import { router } from 'expo-router';
 import { SHItemType } from '@lib/providers/SearchHistoryProvider';
+import { Child } from '@lib/types';
 
 export type SearchPressOptions = {
     addToHistory?: boolean;
+    trackContext?: Child[];
 }
 
 export function useSearchItemActions() {
@@ -21,13 +23,22 @@ export function useSearchItemActions() {
             searchedAt: Date.now(),
         });
         if (item.type === 'track') {
-            await queue.playTrackNow(item.id);
+            const tracks = options?.trackContext;
+            const index = tracks?.findIndex(t => t.id === item.id) ?? -1;
+            if (tracks && index >= 0) {
+                queue.replace(tracks, {
+                    initialIndex: index,
+                    source: { source: 'search', sourceName: 'Search' },
+                });
+            } else {
+                await queue.playTrackNow(item.id);
+            }
         } else if (item.type === 'album') {
             router.push({ pathname: '/albums/[id]', params: { id: item.id } });
         } else if (item.type === 'artist') {
             router.push({ pathname: '/artists/[id]', params: { id: item.id } });
         }
-    }, []);
+    }, [queue.replace, queue.playTrackNow]);
 
     return { press };
 }
