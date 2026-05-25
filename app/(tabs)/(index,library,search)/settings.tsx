@@ -4,13 +4,15 @@ import Setting, { SettingSelectOption } from '@lib/components/Setting';
 import SettingsSection from '@lib/components/SettingsSection';
 import Title from '@lib/components/Title';
 import { useCache, useColors, useMemoryCache, useTabsHeight } from '@lib/hooks';
-import { IconCircleCheck, IconDoor, IconFileMusic, IconLayoutGrid, IconVolume, IconWifi } from '@tabler/icons-react-native';
+import { IconCircleCheck, IconDoor, IconFileMusic, IconLanguage, IconLayoutGrid, IconVolume, IconWifi } from '@tabler/icons-react-native';
 import { useCallback, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Switch, View } from 'react-native';
 import { SheetManager } from 'react-native-actions-sheet';
 import * as Haptics from 'expo-haptics';
 import showToast from '@lib/showToast';
 import { useEqualizer } from 'react-native-nitro-player';
+import { useTranslation } from 'react-i18next';
+import { LANGUAGE_NAMES, SUPPORTED_LANGUAGES, changeLanguage, SupportedLanguage } from '@lib/i18n';
 
 const maxBitRateOptions: SettingSelectOption[] = [
     { label: 'Original', description: 'No transcoding', value: '0', shortLabel: 'Original' },
@@ -44,7 +46,7 @@ const defaultLibraryTabOptions: SettingSelectOption[] = [
     { label: 'Songs', description: 'All songs', value: 'songs', shortLabel: 'Songs' },
 ];
 
-export type SettingId = 'streaming.maxBitRate' | 'streaming.format' | 'storage.clearCache' | 'developer.copyId' | 'ui.toastPosition' | 'ui.autoFocusSearchBar' | 'app.defaultTab' | 'app.defaultLibraryTab' | 'eq.enabled' | 'downloads.wifiOnly' | 'app.persistQueue' | 'downloads.maxBitRate' | 'downloads.format';
+export type SettingId = 'streaming.maxBitRate' | 'streaming.format' | 'storage.clearCache' | 'developer.copyId' | 'ui.toastPosition' | 'ui.autoFocusSearchBar' | 'app.defaultTab' | 'app.defaultLibraryTab' | 'eq.enabled' | 'downloads.wifiOnly' | 'app.persistQueue' | 'downloads.maxBitRate' | 'downloads.format' | 'app.language';
 
 const EQ_PRESETS: Record<string, number[]> = {
     Flat:      [0, 0, 0, 0, 0],
@@ -181,10 +183,17 @@ function EQSection() {
     );
 }
 
+const languageOptions: SettingSelectOption[] = SUPPORTED_LANGUAGES.map(lang => ({
+    label: LANGUAGE_NAMES[lang],
+    value: lang,
+    shortLabel: LANGUAGE_NAMES[lang],
+}));
+
 export default function Settings() {
     const cache = useCache();
     const memoryCache = useMemoryCache();
     const [tabsHeight] = useTabsHeight();
+    const { t, i18n } = useTranslation();
 
     const styles = useMemo(() => StyleSheet.create({
         settings: {
@@ -330,6 +339,17 @@ export default function Settings() {
                         type='switch'
                         label='Copy ID Option'
                         description='Show the copy ID option across the app'
+                    />
+                    <SettingsSection label='Language' />
+                    <Setting
+                        id='app.language'
+                        type='select'
+                        label={t('settings.language.label')}
+                        description={t('settings.language.description')}
+                        icon={IconLanguage}
+                        defaultValue={i18n.language}
+                        options={languageOptions}
+                        onValueChange={(value) => changeLanguage(value as SupportedLanguage)}
                     />
                 </View>
             </ScrollView>

@@ -1,0 +1,145 @@
+{
+  "tabs": {
+    "home": "Inicio",
+    "library": "Biblioteca",
+    "downloads": "Descargas",
+    "search": "Buscar"
+  },
+  "settings": {
+    "title": "Ajustes",
+    "sections": {
+      "launch": "Inicio",
+      "streamingQuality": "Calidad de Streaming",
+      "equalizer": "Ecualizador",
+      "downloads": "Descargas",
+      "storage": "Almacenamiento",
+      "layout": "Apariencia",
+      "developer": "Opciones de Desarrollador",
+      "language": "Idioma"
+    },
+    "persistQueue": {
+      "label": "Mantener Cola al Reiniciar",
+      "description": "Guardar y restaurar tu cola y estado de reproducción al reiniciar la app"
+    },
+    "defaultTab": {
+      "label": "Pestaña Predeterminada",
+      "description": "Qué pestaña abrir al iniciar la app"
+    },
+    "defaultLibraryTab": {
+      "label": "Sección de Biblioteca Predeterminada",
+      "description": "Qué sección de la biblioteca mostrar por defecto"
+    },
+    "maxBitRate": {
+      "label": "Bitrate Máximo",
+      "description": "Bitrate máximo de streaming (requiere transcodificación del servidor)",
+      "downloadDescription": "Bitrate máximo de descarga (requiere transcodificación del servidor)"
+    },
+    "format": {
+      "label": "Formato Preferido",
+      "description": "Formato de audio preferido para transcodificación",
+      "downloadDescription": "Formato de audio preferido para música descargada"
+    },
+    "equalizer": {
+      "label": "Ecualizador",
+      "description": "Ajustar las frecuencias de audio",
+      "reset": "Restablecer"
+    },
+    "wifiOnly": {
+      "label": "Solo Descargar con Wi-Fi",
+      "description": "Solo descargar música cuando estés conectado a Wi-Fi"
+    },
+    "clearCache": {
+      "label": "Limpiar Caché",
+      "description": "Esto no eliminará la música descargada",
+      "confirmTitle": "Limpiar Caché",
+      "confirmMessage": "¿Seguro que quieres limpiar la caché? Esto no eliminará la música descargada.",
+      "confirmButton": "Limpiar",
+      "cancelButton": "Cancelar",
+      "successTitle": "Caché Limpiada",
+      "successSubtitle": "La caché se ha limpiado correctamente."
+    },
+    "toastPosition": {
+      "label": "Posición de Notificaciones",
+      "description": "Cambia la posición de las notificaciones emergentes"
+    },
+    "autoFocusSearch": {
+      "label": "Enfocar Barra de Búsqueda Automáticamente",
+      "description": "Enfocar la barra de búsqueda automáticamente"
+    },
+    "copyId": {
+      "label": "Opción Copiar ID",
+      "description": "Mostrar la opción de copiar ID en toda la app"
+    },
+    "language": {
+      "label": "Idioma de la App",
+      "description": "Cambiar el idioma de la interfaz"
+    }
+  },
+  "tabs_options": {
+    "home": "Inicio",
+    "library": "Biblioteca",
+    "downloads": "Descargas",
+    "search": "Buscar"
+  },
+  "library_tabs": {
+    "playlists": "Listas de reproducción",
+    "artists": "Artistas",
+    "albums": "Álbumes",
+    "songs": "Canciones"
+  },
+  "bitrate_options": {
+    "original": "Original",
+    "original_desc": "Sin transcodificación"
+  },
+  "format_options": {
+    "original": "Original",
+    "original_desc": "Formato por defecto del servidor"
+  },
+  "language_options": {
+    "en": "English",
+    "es": "Español"
+  },
+  "player": {
+    "loading": "Cargando...",
+    "notPlaying": "Sin reproducción",
+    "clearQueue": "Limpiar Cola",
+    "clearQueueMessage": "¿Seguro que quieres limpiar la cola?",
+    "clear": "Limpiar",
+    "cancel": "Cancelar"
+  },
+  "search": {
+    "placeholder": "Buscar",
+    "recentSearches": "Búsquedas Recientes",
+    "noResults": "Sin Resultados",
+    "noResultsSubtitle": "Prueba a buscar otra cosa"
+  },
+  "library": {
+    "title": "Biblioteca"
+  },
+  "home": {
+    "pinned": "Fijados",
+    "playlists": "Listas de reproducción",
+    "random": "Aleatorio",
+    "recentlyPlayed": "Escuchado Recientemente",
+    "recentlyAdded": "Añadido Recientemente"
+  },
+  "downloads": {
+    "title": "Descargas",
+    "empty": "Sin Descargas",
+    "emptySubtitle": "Tu música descargada aparecerá aquí"
+  },
+  "common": {
+    "ok": "Aceptar",
+    "cancel": "Cancelar",
+    "confirm": "Confirmar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "save": "Guardar",
+    "close": "Cerrar",
+    "back": "Atrás",
+    "error": "Error",
+    "loading": "Cargando...",
+    "unknownArtist": "Artista Desconocido",
+    "unknownAlbum": "Álbum Desconocido"
+  }
+}
