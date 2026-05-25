@@ -19,6 +19,7 @@ import LyricsTab from './LyricsTab';
 import { ColorSchemeOverride } from '@lib/providers/ColorSchemeOverride';
 import Toast from 'react-native-toast-message';
 import { toastConfig } from '@lib/toastConfig';
+import { setStatusBarStyle } from 'expo-status-bar';
 
 type GestureEnabledContextType = [
     boolean,
@@ -114,6 +115,14 @@ function PlaybackSheet({ sheetId, payload }: SheetProps<'playback'>) {
                     setTimeout(() => {
                         setIsAnimated(true);
                     }, 1000);
+                    if (Platform.OS === 'android') {
+                        setStatusBarStyle('light');
+                    }
+                }}
+                onClose={() => {
+                    if (Platform.OS === 'android') {
+                        setStatusBarStyle('auto');
+                    }
                 }}
             >
                 <GestureEnabledContext.Provider value={[gestureEnabled, setGestureEnabled]}>
