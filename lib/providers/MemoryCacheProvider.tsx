@@ -77,7 +77,7 @@ export default function MemoryCacheProvider({ children }: { children?: React.Rea
         // TODO: Add pagination support
         if (!api) return;
 
-        const albumsRes = await api.get('/getAlbumList2', { params: { type: 'newest', size: 500 } });
+        const albumsRes = await api.get('/getAlbumList2', { params: { type: 'alphabeticalByName', size: 500 } });
         const albums = albumsRes.data?.['subsonic-response']?.albumList2?.album as AlbumID3[];
         if (!albums) return;
 
@@ -115,8 +115,12 @@ export default function MemoryCacheProvider({ children }: { children?: React.Rea
         const songs = songsRes.data?.['subsonic-response']?.randomSongs?.song as Child[];
         if (!songs) return;
 
-        setCache(c => ({ ...c, allSongs: songs }));
-        return songs;
+        const sorted = [...songs].sort((a, b) =>
+            (a.title ?? '').localeCompare(b.title ?? '', undefined, { sensitivity: 'base' })
+        );
+
+        setCache(c => ({ ...c, allSongs: sorted }));
+        return sorted;
     }, [api, server.url]);
 
     // Prefetch the data
