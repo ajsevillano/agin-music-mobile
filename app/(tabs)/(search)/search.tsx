@@ -72,6 +72,10 @@ export default function Search() {
 
     const filteredResults = useMemo<MappedResult[]>(() => results.filter(item => item.type === tab || tab === 'all'), [results, tab]);
 
+    const tracksInResults = useMemo<Child[]>(() => filteredResults
+        .filter(item => item.type === 'track')
+        .map(item => item.fullData as Child), [filteredResults]);
+
     useEffect(() => {
         (async () => {
             if (!api) return;
@@ -162,7 +166,7 @@ export default function Search() {
                 {/* Had to do this beacuse Navidrome returns empty response for one character queries */}
                 {query.length > 1 && <Animated.View style={styles.main} entering={entering} exiting={exiting}>
                     <TagTabs data={tabs} tab={tab} onChange={setTab} keyboardShouldPersistTaps='handled' />
-                    <MediaLibraryList data={filteredResults} onItemPress={actions.press} size='medium' keyboardShouldPersistTaps='handled' rightSection={SearchRightSection} />
+                    <MediaLibraryList data={filteredResults} onItemPress={(item) => actions.press(item, { trackContext: tracksInResults })} size='medium' keyboardShouldPersistTaps='handled' rightSection={SearchRightSection} />
                 </Animated.View>}
                 {query.length <= 1 && <Animated.View style={[styles.history, styles.main]} entering={entering} exiting={exiting}>
                     {mappedHistory.length !== 0 && <SearchSection label='Recently Searched' action={{ label: 'Clear', onPress: async () => await history.clearAll() }} />}
