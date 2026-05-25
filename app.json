@@ -37,6 +37,7 @@
     },
     "plugins": [
       "expo-router",
+      "./plugins/withAndroidMediaService",
       [
         "expo-splash-screen",
         {
