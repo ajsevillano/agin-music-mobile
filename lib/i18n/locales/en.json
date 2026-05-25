@@ -1,0 +1,145 @@
+{
+  "tabs": {
+    "home": "Home",
+    "library": "Library",
+    "downloads": "Downloads",
+    "search": "Search"
+  },
+  "settings": {
+    "title": "Settings",
+    "sections": {
+      "launch": "Launch",
+      "streamingQuality": "Streaming Quality",
+      "equalizer": "Equalizer",
+      "downloads": "Downloads",
+      "storage": "Storage",
+      "layout": "Layout",
+      "developer": "Developer Options",
+      "language": "Language"
+    },
+    "persistQueue": {
+      "label": "Persist Queue on Restart",
+      "description": "Save and restore your queue and playback state when restarting the app"
+    },
+    "defaultTab": {
+      "label": "Default Tab",
+      "description": "Which tab to open when launching the app"
+    },
+    "defaultLibraryTab": {
+      "label": "Default Library Section",
+      "description": "Which library section to show by default"
+    },
+    "maxBitRate": {
+      "label": "Max Bitrate",
+      "description": "Maximum streaming bitrate (requires server transcoding)",
+      "downloadDescription": "Maximum download bitrate (requires server transcoding)"
+    },
+    "format": {
+      "label": "Preferred Format",
+      "description": "Preferred audio format for transcoding",
+      "downloadDescription": "Preferred audio format for downloaded music"
+    },
+    "equalizer": {
+      "label": "Equalizer",
+      "description": "Adjust audio frequencies",
+      "reset": "Reset"
+    },
+    "wifiOnly": {
+      "label": "Wi-Fi Only Downloads",
+      "description": "Only download music when connected to Wi-Fi"
+    },
+    "clearCache": {
+      "label": "Clear Cache",
+      "description": "This will not remove downloaded music",
+      "confirmTitle": "Clear Cache",
+      "confirmMessage": "Are you sure you want to clear the cache? This will not remove downloaded music.",
+      "confirmButton": "Clear",
+      "cancelButton": "Cancel",
+      "successTitle": "Cache Cleared",
+      "successSubtitle": "The cache has been cleared successfully."
+    },
+    "toastPosition": {
+      "label": "Toast Position",
+      "description": "Change the position of the toast notifications"
+    },
+    "autoFocusSearch": {
+      "label": "Automatically Focus Search Bar",
+      "description": "Focus the search bar automatically"
+    },
+    "copyId": {
+      "label": "Copy ID Option",
+      "description": "Show the copy ID option across the app"
+    },
+    "language": {
+      "label": "App Language",
+      "description": "Change the app interface language"
+    }
+  },
+  "tabs_options": {
+    "home": "Home",
+    "library": "Library",
+    "downloads": "Downloads",
+    "search": "Search"
+  },
+  "library_tabs": {
+    "playlists": "Playlists",
+    "artists": "Artists",
+    "albums": "Albums",
+    "songs": "Songs"
+  },
+  "bitrate_options": {
+    "original": "Original",
+    "original_desc": "No transcoding"
+  },
+  "format_options": {
+    "original": "Original",
+    "original_desc": "Server default format"
+  },
+  "language_options": {
+    "en": "English",
+    "es": "Español"
+  },
+  "player": {
+    "loading": "Loading...",
+    "notPlaying": "Not Playing",
+    "clearQueue": "Clear Queue",
+    "clearQueueMessage": "Are you sure you want to clear the queue?",
+    "clear": "Clear",
+    "cancel": "Cancel"
+  },
+  "search": {
+    "placeholder": "Search",
+    "recentSearches": "Recent Searches",
+    "noResults": "No Results",
+    "noResultsSubtitle": "Try searching for something else"
+  },
+  "library": {
+    "title": "Library"
+  },
+  "home": {
+    "pinned": "Pinned",
+    "playlists": "Playlists",
+    "random": "Shuffle",
+    "recentlyPlayed": "Recently Played",
+    "recentlyAdded": "Recently Added"
+  },
+  "downloads": {
+    "title": "Downloads",
+    "empty": "No Downloads",
+    "emptySubtitle": "Your downloaded music will appear here"
+  },
+  "common": {
+    "ok": "OK",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "delete": "Delete",
+    "edit": "Edit",
+    "save": "Save",
+    "close": "Close",
+    "back": "Back",
+    "error": "Error",
+    "loading": "Loading...",
+    "unknownArtist": "Unknown Artist",
+    "unknownAlbum": "Unknown Album"
+  }
+}

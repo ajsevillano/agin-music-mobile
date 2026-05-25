@@ -25,9 +25,10 @@ export interface SettingProps extends TouchableHighlightProps {
     type: 'select' | 'switch' | 'button';
     options?: SettingSelectOption[];
     defaultValue?: SettingValue;
+    onValueChange?: (value: string) => void;
 }
 
-export default function Setting({ id, icon, label, description, type, options, defaultValue, ...props }: SettingProps) {
+export default function Setting({ id, icon, label, description, type, options, defaultValue, onValueChange, ...props }: SettingProps) {
     const colors = useColors();
     const [value, setValue] = useState<SettingValue>();
 
@@ -70,7 +71,10 @@ export default function Setting({ id, icon, label, description, type, options, d
                     value: value as string ?? '',
                 }
             });
-            if (newValue) setValue(newValue.value);
+            if (newValue) {
+                setValue(newValue.value);
+                onValueChange?.(newValue.value);
+            }
         }
     }, [icon, label, description, value, options]);
 

@@ -3,7 +3,7 @@ import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import 'react-native-reanimated';
 import { useColorScheme } from '@/lib/hooks/useColorScheme';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -26,6 +26,8 @@ import PinsProvider from '@lib/providers/PinsProvider';
 import DownloadProvider from '@lib/providers/DownloadProvider';
 import { registerWidgetTaskHandler } from 'react-native-android-widget';
 import { widgetTaskHandler } from '@lib/widget-task-handler';
+import { I18nextProvider } from 'react-i18next';
+import i18n, { initI18n } from '@lib/i18n';
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -45,6 +47,7 @@ registerWidgetTaskHandler(widgetTaskHandler);
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
+  const [i18nReady, setI18nReady] = useState(false);
   const [loaded] = useFonts({
     'Poppins-Black': require('../assets/fonts/Poppins/Poppins-Black.ttf'),
     'Poppins-BlackItalic': require('../assets/fonts/Poppins/Poppins-BlackItalic.ttf'),
@@ -68,16 +71,21 @@ export default function RootLayout() {
   useSetupPlayer({});
 
   useEffect(() => {
-    if (loaded) {
+    initI18n().then(() => setI18nReady(true));
+  }, []);
+
+  useEffect(() => {
+    if (loaded && i18nReady) {
       SplashScreen.hideAsync();
     }
-  }, [loaded]);
+  }, [loaded, i18nReady]);
 
-  if (!loaded) {
+  if (!loaded || !i18nReady) {
     return null;
   }
 
   return (
+    <I18nextProvider i18n={i18n}>
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <SafeAreaProvider initialMetrics={initialWindowMetrics}>
         <SQLiteProvider databaseName="cache.db" onInit={initDatabase}>
@@ -110,5 +118,6 @@ export default function RootLayout() {
         </SQLiteProvider>
       </SafeAreaProvider>
     </ThemeProvider>
+    </I18nextProvider>
   );
 }
