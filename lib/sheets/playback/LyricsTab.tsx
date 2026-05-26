@@ -12,6 +12,7 @@ import { StructuredLyrics } from '@/lib/types';
 import SycnedLyricsView from '@/lib/components/LyricsView';
 import UnsyncedLyricsView from '@/lib/components/UnsyncedLyricsView';
 import FullscreenMessage from '@lib/components/FullscreenMessage';
+import { useTranslation } from 'react-i18next';
 
 export default function LyricsTab() {
     const colors = useColors();
@@ -19,6 +20,7 @@ export default function LyricsTab() {
     const { nowPlaying } = queue;
     const cache = useCache();
     const api = useApi();
+    const { t } = useTranslation();
 
     const [lyrics, setLyrics] = useState<StructuredLyrics[]>([]);
     const [noLyrics, setNoLyrics] = useState(false);
@@ -62,8 +64,8 @@ export default function LyricsTab() {
             {/* TODO: Add lyrics selection */}
             {noLyrics ? <FullscreenMessage
                 icon={IconMessage}
-                label='No lyrics available'
-                description='No lyrics are available for this song.'
+                label={t('sheets.lyrics.empty')}
+                description={t('sheets.lyrics.emptyDescription')}
             /> : lyrics?.[0]?.synced == false ? <UnsyncedLyricsView lyrics={lyrics?.[0]} /> : <SycnedLyricsView lyrics={lyrics?.[0]} />}
         </>
     )

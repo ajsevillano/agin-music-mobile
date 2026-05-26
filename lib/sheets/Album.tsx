@@ -10,6 +10,7 @@ import { IconArrowsShuffle, IconCirclePlus, IconCopy, IconDownload, IconMicropho
 import * as Clipboard from 'expo-clipboard';
 import showToast from '@lib/showToast';
 import { useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 
 function AlbumSheet({ sheetId, payload }: SheetProps<'album'>) {
     const insets = useSafeAreaInsets();
@@ -17,6 +18,7 @@ function AlbumSheet({ sheetId, payload }: SheetProps<'album'>) {
     const cover = useCoverBuilder();
     const helpers = useApiHelpers();
     const queue = useQueue();
+    const { t } = useTranslation();
 
     const router = useRouter();
     const copyIdEnabled = useSetting('developer.copyId');
@@ -48,7 +50,7 @@ function AlbumSheet({ sheetId, payload }: SheetProps<'album'>) {
             />
             {payload?.context != 'album' && <SheetOption
                 icon={IconPlayerPlay}
-                label='Play'
+                label={t('sheets.album.play')}
                 onPress={async () => {
                     SheetManager.hide(sheetId);
                     const newQueue = data.song;
@@ -66,7 +68,7 @@ function AlbumSheet({ sheetId, payload }: SheetProps<'album'>) {
             />}
             {payload?.context != 'album' && <SheetOption
                 icon={IconArrowsShuffle}
-                label='Shuffle'
+                label={t('sheets.album.shuffle')}
                 onPress={async () => {
                     SheetManager.hide(sheetId);
                     const newQueue = data.song;
@@ -94,7 +96,7 @@ function AlbumSheet({ sheetId, payload }: SheetProps<'album'>) {
                 />} */}
             {data?.artistId && <SheetOption
                 icon={IconMicrophone2}
-                label='Go to Artist'
+                label={t('sheets.album.goToArtist')}
                 onPress={() => {
                     SheetManager.hide(sheetId);
                     router.push({ pathname: '/artists/[id]', params: { id: data.artistId! } });
@@ -102,7 +104,7 @@ function AlbumSheet({ sheetId, payload }: SheetProps<'album'>) {
             />}
             {payload?.context != 'album' && data?.song && <SheetOption
                 icon={IconDownload}
-                label='Download Album'
+                label={t('sheets.album.download')}
                 onPress={async () => {
                     if (!data?.song) return;
                     SheetManager.hide(sheetId);
@@ -111,7 +113,7 @@ function AlbumSheet({ sheetId, payload }: SheetProps<'album'>) {
             />}
             <SheetOption
                 icon={isPinned ? IconPinnedOff : IconPin}
-                label={isPinned ? 'Unpin Album' : 'Pin Album'}
+                label={isPinned ? t('sheets.album.unpin') : t('sheets.album.pin')}
                 onPress={async () => {
                     if (!payload?.id) return;
                     if (isPinned) await pins.removePin(payload?.id);
@@ -127,11 +129,11 @@ function AlbumSheet({ sheetId, payload }: SheetProps<'album'>) {
             />
             {copyIdEnabled && <SheetOption
                 icon={IconCopy}
-                label='Copy ID'
+                label={t('sheets.album.copyId')}
                 onPress={async () => {
                     await Clipboard.setStringAsync(payload?.id ?? '');
                     await showToast({
-                        title: 'Copied ID',
+                        title: t('sheets.common.copiedId'),
                         subtitle: payload?.id,
                         icon: IconCopy,
                     });
@@ -140,7 +142,7 @@ function AlbumSheet({ sheetId, payload }: SheetProps<'album'>) {
             />}
             <SheetOption
                 icon={IconCirclePlus}
-                label='Add to a Playlist'
+                label={t('sheets.album.addToPlaylist')}
                 onPress={async () => {
                     if (!data.song) return;
                     const { added } = await SheetManager.show('addToPlaylist', {

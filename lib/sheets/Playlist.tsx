@@ -8,9 +8,11 @@ import SheetTrackHeader from '@lib/components/sheet/SheetTrackHeader';
 import SheetOption from '@lib/components/sheet/SheetOption';
 import { IconArrowsShuffle, IconCirclePlus, IconCopy, IconDownload, IconPencil, IconPin, IconPinnedOff, IconPlayerPlay, IconTrash } from '@tabler/icons-react-native';
 import { formatDistanceToNow } from 'date-fns';
+import { enUS, es as esLocale } from 'date-fns/locale';
 import { router } from 'expo-router';
 import * as Clipboard from 'expo-clipboard';
 import showToast from '@lib/showToast';
+import { useTranslation } from 'react-i18next';
 
 function PlaylistSheet({ sheetId, payload }: SheetProps<'playlist'>) {
     const insets = useSafeAreaInsets();
@@ -18,6 +20,8 @@ function PlaylistSheet({ sheetId, payload }: SheetProps<'playlist'>) {
     const cover = useCoverBuilder();
     const helpers = useApiHelpers();
     const queue = useQueue();
+    const { t, i18n } = useTranslation();
+    const dateLocale = i18n.language === 'es' ? esLocale : enUS;
 
     const copyIdEnabled = useSetting('developer.copyId');
 
@@ -44,11 +48,14 @@ function PlaylistSheet({ sheetId, payload }: SheetProps<'playlist'>) {
                 cover={{ uri: cover.generateUrl(data?.coverArt ?? '', { size: 128 }) }}
                 coverCacheKey={`${data?.coverArt}-128x128`}
                 title={data?.name}
-                artist={`${data?.songCount} songs • edited ${data?.changed ? formatDistanceToNow(new Date(data?.changed), { addSuffix: true }) : ''}`}
+                artist={t('sheets.playlist.subtitle', {
+                    count: data?.songCount ?? 0,
+                    when: data?.changed ? formatDistanceToNow(new Date(data.changed), { addSuffix: true, locale: dateLocale }) : '',
+                })}
             />
             {payload?.context != 'playlist' && <SheetOption
                 icon={IconPlayerPlay}
-                label='Play'
+                label={t('sheets.playlist.play')}
                 onPress={async () => {
                     SheetManager.hide(sheetId);
                     const newQueue = data.entry;
@@ -66,7 +73,7 @@ function PlaylistSheet({ sheetId, payload }: SheetProps<'playlist'>) {
             />}
             {payload?.context != 'playlist' && <SheetOption
                 icon={IconArrowsShuffle}
-                label='Shuffle'
+                label={t('sheets.playlist.shuffle')}
                 onPress={async () => {
                     SheetManager.hide(sheetId);
                     const newQueue = data.entry;
@@ -85,7 +92,7 @@ function PlaylistSheet({ sheetId, payload }: SheetProps<'playlist'>) {
             />}
             <SheetOption
                 icon={IconPencil}
-                label='Edit Playlist'
+                label={t('sheets.playlist.edit')}
                 onPress={() => {
                     SheetManager.hide(sheetId);
                     router.push({ pathname: '/playlists/[id]/edit', params: { id: payload?.id ?? '' } });
@@ -93,7 +100,7 @@ function PlaylistSheet({ sheetId, payload }: SheetProps<'playlist'>) {
             />
             {payload?.context != 'playlist' && data?.entry && <SheetOption
                 icon={IconDownload}
-                label='Download Playlist'
+                label={t('sheets.playlist.download')}
                 onPress={async () => {
                     if (!data?.entry) return;
                     SheetManager.hide(sheetId);
@@ -102,7 +109,7 @@ function PlaylistSheet({ sheetId, payload }: SheetProps<'playlist'>) {
             />}
             <SheetOption
                 icon={isPinned ? IconPinnedOff : IconPin}
-                label={isPinned ? 'Unpin Playlist' : 'Pin Playlist'}
+                label={isPinned ? t('sheets.playlist.unpin') : t('sheets.playlist.pin')}
                 onPress={async () => {
                     if (!payload?.id) return;
                     if (isPinned) await pins.removePin(payload?.id);
@@ -118,11 +125,11 @@ function PlaylistSheet({ sheetId, payload }: SheetProps<'playlist'>) {
             />
             {copyIdEnabled && <SheetOption
                 icon={IconCopy}
-                label='Copy ID'
+                label={t('sheets.playlist.copyId')}
                 onPress={async () => {
                     await Clipboard.setStringAsync(payload?.id ?? '');
                     await showToast({
-                        title: 'Copied ID',
+                        title: t('sheets.common.copiedId'),
                         subtitle: payload?.id,
                         icon: IconCopy,
                     });
@@ -131,7 +138,7 @@ function PlaylistSheet({ sheetId, payload }: SheetProps<'playlist'>) {
             />}
             <SheetOption
                 icon={IconCirclePlus}
-                label='Add to a Playlist'
+                label={t('sheets.playlist.addToPlaylist')}
                 onPress={async () => {
                     if (!data.entry) return;
                     const { added } = await SheetManager.show('addToPlaylist', {
@@ -145,7 +152,7 @@ function PlaylistSheet({ sheetId, payload }: SheetProps<'playlist'>) {
             />
             <SheetOption
                 icon={IconTrash}
-                label='Remove Playlist'
+                label={t('sheets.playlist.remove')}
                 variant='destructive'
                 onPress={async () => {
                     if (!payload?.id) return;
@@ -154,7 +161,7 @@ function PlaylistSheet({ sheetId, payload }: SheetProps<'playlist'>) {
                     if (!removed) return;
 
                     await showToast({
-                        title: 'Playlist Removed',
+                        title: t('sheets.playlist.removedToast'),
                         subtitle: data?.name,
                         icon: IconTrash,
                     });

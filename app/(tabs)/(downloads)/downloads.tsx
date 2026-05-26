@@ -14,6 +14,7 @@ import * as Haptics from "expo-haptics";
 import showToast from "@lib/showToast";
 import { DownloadedTrack, DownloadProgress } from "react-native-nitro-player";
 import { Child } from "@lib/types";
+import { useTranslation } from "react-i18next";
 
 function formatBytes(bytes: number): string {
     if (bytes === 0) return '0 B';
@@ -43,6 +44,7 @@ const ActiveDownloadItem = React.memo(function ActiveDownloadItem({
 }) {
     const cover = useCoverBuilder();
     const colors = useColors();
+    const { t } = useTranslation();
     const percentage = Math.round(progress.progress * 100);
     const coverArt = meta?.coverArt;
     const isPaused = progress.state === 'paused';
@@ -63,12 +65,12 @@ const ActiveDownloadItem = React.memo(function ActiveDownloadItem({
     });
 
     const statusText = progress.state === 'pending'
-        ? 'Waiting...'
+        ? t('downloads.states.waiting')
         : isPaused
-            ? `Paused \u2022 ${percentage}%`
+            ? t('downloads.states.paused', { percentage })
             : percentage >= 100
-                ? 'Finalizing...'
-                : `${percentage}% \u2022 ${formatBytes(progress.bytesDownloaded)} / ${formatBytes(progress.totalBytes)}`;
+                ? t('downloads.states.finalizing')
+                : t('downloads.states.progress', { percentage, downloaded: formatBytes(progress.bytesDownloaded), total: formatBytes(progress.totalBytes) });
 
     const handlePauseResume = useCallback(() => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -94,8 +96,8 @@ const ActiveDownloadItem = React.memo(function ActiveDownloadItem({
                 withShadow={false}
             />
             <View style={{ flex: 1 }}>
-                <Title size={14} numberOfLines={1}>{meta?.title ?? 'Downloading...'}</Title>
-                <Title size={12} color={colors.text[1]} fontFamily="Poppins-Regular" numberOfLines={1}>{meta?.artist ?? 'Downloading...'}</Title>
+                <Title size={14} numberOfLines={1}>{meta?.title ?? t('downloads.downloadingPlaceholder')}</Title>
+                <Title size={12} color={colors.text[1]} fontFamily="Poppins-Regular" numberOfLines={1}>{meta?.artist ?? t('downloads.downloadingPlaceholder')}</Title>
                 <View style={{ height: 3, borderRadius: 2, backgroundColor: colors.border[0], marginTop: 4, overflow: 'hidden' }}>
                     <RNAnimated.View style={{ height: '100%', width: animatedWidth, backgroundColor: isPaused ? colors.text[1] : colors.forcedTint, borderRadius: 2 }} />
                 </View>
@@ -196,6 +198,7 @@ export default function Downloads() {
     const colors = useColors();
     const downloads = useDownloads();
     const queue = useQueue();
+    const { t } = useTranslation();
 
     const styles = useMemo(() => StyleSheet.create({
         sectionHeader: {
@@ -250,17 +253,17 @@ export default function Downloads() {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
         const confirmed = await SheetManager.show('confirm', {
             payload: {
-                title: 'Delete All Downloads',
-                message: 'Are you sure you want to delete all downloaded music? This cannot be undone.',
-                confirmText: 'Delete All',
-                cancelText: 'Cancel',
+                title: t('downloads.deleteAllConfirm.title'),
+                message: t('downloads.deleteAllConfirm.message'),
+                confirmText: t('downloads.deleteAllConfirm.confirm'),
+                cancelText: t('common.cancel'),
                 variant: 'danger',
             }
         });
         if (!confirmed) return;
         await downloads.deleteAll();
-        showToast({ title: 'All Downloads Deleted', icon: IconTrash });
-    }, [downloads.deleteAll]);
+        showToast({ title: t('downloads.deleteAllToast'), icon: IconTrash });
+    }, [downloads.deleteAll, t]);
 
     const activeRows: DownloadRow[] = useMemo(() =>
         downloads.activeDownloads.map(p => ({
@@ -291,20 +294,20 @@ export default function Downloads() {
     const flatData: DownloadRow[] = useMemo(() => {
         const items: DownloadRow[] = [];
         if (activeRows.length > 0) {
-            items.push({ type: 'header', key: 'header-downloading', title: 'Downloading' });
+            items.push({ type: 'header', key: 'header-downloading', title: t('downloads.downloadingSection') });
             items.push(...activeRows);
         }
         if (completedRows.length > 0) {
-            items.push({ type: 'header', key: 'header-downloaded', title: `Downloaded \u2022 ${completedRows.length} tracks` });
+            items.push({ type: 'header', key: 'header-downloaded', title: t('downloads.downloadedSection', { count: completedRows.length }) });
             items.push(...completedRows);
         }
         return items;
-    }, [activeRows, completedRows]);
+    }, [activeRows, completedRows, t]);
 
     const isEmpty = activeRows.length === 0 && completedRows.length === 0;
 
     const subtitle = downloads.formattedSize !== '0 B'
-        ? `${downloads.formattedSize} used`
+        ? t('downloads.usedSpace', { size: downloads.formattedSize })
         : !isEmpty
             ? ' '
             : undefined;
@@ -351,7 +354,7 @@ export default function Downloads() {
             <View style={styles.footer}>
                 <Pressable style={styles.deleteAllBtn} onPress={handleDeleteAll}>
                     <IconTrash size={16} color="#ff4d4f" />
-                    <Title size={13} color="#ff4d4f" fontFamily="Poppins-Medium">Delete All Downloads</Title>
+                    <Title size={13} color="#ff4d4f" fontFamily="Poppins-Medium">{t('downloads.deleteAll')}</Title>
                 </Pressable>
                 <View style={{ height: tabsHeight }} />
             </View>
@@ -377,11 +380,11 @@ export default function Downloads() {
             }}>
                 <IconWifi size={18} color={colors.forcedTint} />
                 <View style={{ flex: 1 }}>
-                    <Title size={13} fontFamily="Poppins-SemiBold">Wi-Fi Only Mode</Title>
+                    <Title size={13} fontFamily="Poppins-SemiBold">{t('downloads.wifiOnly.title')}</Title>
                     <Title size={12} fontFamily="Poppins-Regular" color={colors.text[1]}>
                         {count > 0
-                            ? `${count} download${count !== 1 ? 's' : ''} waiting for Wi-Fi`
-                            : 'Downloads paused until Wi-Fi is available'}
+                            ? t('downloads.wifiOnly.waiting', { count })
+                            : t('downloads.wifiOnly.paused')}
                     </Title>
                 </View>
             </View>
@@ -390,14 +393,14 @@ export default function Downloads() {
 
     return (
         <Container includeBottom={false}>
-            <Header title="Downloads" subtitle={subtitle} />
+            <Header title={t('downloads.title')} subtitle={subtitle} />
             {isEmpty ? (
                 <View style={{ flex: 1, paddingBottom: tabsHeight }}>
                     {downloads.wifiOnlyBlocked && wifiBanner}
                     <FullscreenMessage
                         icon={IconCircleArrowDown}
-                        label="No Downloads"
-                        description="Download tracks from the library to listen offline"
+                        label={t('downloads.empty')}
+                        description={t('downloads.emptySubtitle')}
                     />
                 </View>
             ) : (

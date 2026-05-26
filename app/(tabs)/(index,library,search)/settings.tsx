@@ -14,37 +14,6 @@ import { useEqualizer } from 'react-native-nitro-player';
 import { useTranslation } from 'react-i18next';
 import { LANGUAGE_NAMES, SUPPORTED_LANGUAGES, changeLanguage, SupportedLanguage } from '@lib/i18n';
 
-const maxBitRateOptions: SettingSelectOption[] = [
-    { label: 'Original', description: 'No transcoding', value: '0', shortLabel: 'Original' },
-    { label: '320 kbps', description: 'Highest quality transcode', value: '320', shortLabel: '320k' },
-    { label: '256 kbps', description: 'High quality', value: '256', shortLabel: '256k' },
-    { label: '192 kbps', description: 'Good quality', value: '192', shortLabel: '192k' },
-    { label: '128 kbps', description: 'Standard quality', value: '128', shortLabel: '128k' },
-    { label: '96 kbps', description: 'Low quality', value: '96', shortLabel: '96k' },
-    { label: '64 kbps', description: 'Minimum quality', value: '64', shortLabel: '64k' },
-];
-
-const formatOptions: SettingSelectOption[] = [
-    { label: 'Original', description: 'Server default format', value: 'raw', shortLabel: 'Original' },
-    { label: 'MP3', description: 'Most compatible', value: 'mp3', shortLabel: 'MP3' },
-    { label: 'Opus', description: 'Modern, efficient codec', value: 'opus', shortLabel: 'Opus' },
-    { label: 'AAC', description: 'Good quality, widely supported', value: 'aac', shortLabel: 'AAC' },
-    { label: 'OGG Vorbis', description: 'Open source format', value: 'ogg', shortLabel: 'OGG' },
-];
-
-const defaultTabOptions: SettingSelectOption[] = [
-    { label: 'Home', description: 'Main home screen', value: 'home', shortLabel: 'Home' },
-    { label: 'Library', description: 'Your music library', value: 'library', shortLabel: 'Library' },
-    { label: 'Downloads', description: 'Downloaded music', value: 'downloads', shortLabel: 'Downloads' },
-    { label: 'Search', description: 'Search for music', value: 'search', shortLabel: 'Search' },
-];
-
-const defaultLibraryTabOptions: SettingSelectOption[] = [
-    { label: 'Playlists', description: 'Your playlists', value: 'playlists', shortLabel: 'Playlists' },
-    { label: 'Artists', description: 'Browse by artist', value: 'artists', shortLabel: 'Artists' },
-    { label: 'Albums', description: 'Browse by album', value: 'albums', shortLabel: 'Albums' },
-    { label: 'Songs', description: 'All songs', value: 'songs', shortLabel: 'Songs' },
-];
 
 export type SettingId = 'streaming.maxBitRate' | 'streaming.format' | 'storage.clearCache' | 'developer.copyId' | 'ui.toastPosition' | 'ui.autoFocusSearchBar' | 'app.defaultTab' | 'app.defaultLibraryTab' | 'eq.enabled' | 'downloads.wifiOnly' | 'app.persistQueue' | 'downloads.maxBitRate' | 'downloads.format' | 'app.language';
 
@@ -99,6 +68,7 @@ function EQSection() {
     const colors = useColors();
     const eq = useEqualizer();
     const [activePreset, setActivePreset] = useState<string | null>(eq.currentPreset);
+    const { t } = useTranslation();
 
     const handlePreset = useCallback((name: string) => {
         const gains = EQ_PRESETS[name];
@@ -128,8 +98,8 @@ function EQSection() {
         <>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 10 }}>
                 <View>
-                    <Title size={14}>Equalizer</Title>
-                    <Title size={12} color={colors.text[1]} fontFamily="Poppins-Regular">Adjust audio frequencies</Title>
+                    <Title size={14}>{t('settings.equalizer.label')}</Title>
+                    <Title size={12} color={colors.text[1]} fontFamily="Poppins-Regular">{t('settings.equalizer.description')}</Title>
                 </View>
                 <Switch
                     trackColor={{ false: colors.segmentedControlBackground, true: colors.forcedTint }}
@@ -165,7 +135,7 @@ function EQSection() {
                                 backgroundColor: colors.border[0],
                             }}
                         >
-                            <Title size={12} fontFamily="Poppins-Medium" color={colors.text[1]}>Reset</Title>
+                            <Title size={12} fontFamily="Poppins-Medium" color={colors.text[1]}>{t('settings.equalizer.reset')}</Title>
                         </Pressable>
                     </View>
                     {eq.bands.map((band, index) => (
@@ -195,6 +165,43 @@ export default function Settings() {
     const [tabsHeight] = useTabsHeight();
     const { t, i18n } = useTranslation();
 
+    const maxBitRateOptions = useMemo<SettingSelectOption[]>(() => [
+        { label: t('options.bitrate.original'), description: t('options.bitrate.originalDesc'), value: '0', shortLabel: t('options.bitrate.original') },
+        { label: '320 kbps', description: t('options.bitrate.high'), value: '320', shortLabel: '320k' },
+        { label: '256 kbps', description: t('options.bitrate.highQuality'), value: '256', shortLabel: '256k' },
+        { label: '192 kbps', description: t('options.bitrate.goodQuality'), value: '192', shortLabel: '192k' },
+        { label: '128 kbps', description: t('options.bitrate.standardQuality'), value: '128', shortLabel: '128k' },
+        { label: '96 kbps', description: t('options.bitrate.lowQuality'), value: '96', shortLabel: '96k' },
+        { label: '64 kbps', description: t('options.bitrate.minQuality'), value: '64', shortLabel: '64k' },
+    ], [t]);
+
+    const formatOptions = useMemo<SettingSelectOption[]>(() => [
+        { label: t('options.format.original'), description: t('options.format.originalDesc'), value: 'raw', shortLabel: t('options.format.original') },
+        { label: 'MP3', description: t('options.format.mp3'), value: 'mp3', shortLabel: 'MP3' },
+        { label: 'Opus', description: t('options.format.opus'), value: 'opus', shortLabel: 'Opus' },
+        { label: 'AAC', description: t('options.format.aac'), value: 'aac', shortLabel: 'AAC' },
+        { label: t('options.format.oggLabel'), description: t('options.format.ogg'), value: 'ogg', shortLabel: 'OGG' },
+    ], [t]);
+
+    const defaultTabOptions = useMemo<SettingSelectOption[]>(() => [
+        { label: t('tabs.home'), description: t('options.defaultTab.homeDesc'), value: 'home', shortLabel: t('tabs.home') },
+        { label: t('tabs.library'), description: t('options.defaultTab.libraryDesc'), value: 'library', shortLabel: t('tabs.library') },
+        { label: t('tabs.downloads'), description: t('options.defaultTab.downloadsDesc'), value: 'downloads', shortLabel: t('tabs.downloads') },
+        { label: t('tabs.search'), description: t('options.defaultTab.searchDesc'), value: 'search', shortLabel: t('tabs.search') },
+    ], [t]);
+
+    const defaultLibraryTabOptions = useMemo<SettingSelectOption[]>(() => [
+        { label: t('library.tabs.playlists'), description: t('options.defaultLibraryTab.playlistsDesc'), value: 'playlists', shortLabel: t('library.tabs.playlists') },
+        { label: t('library.tabs.artists'), description: t('options.defaultLibraryTab.artistsDesc'), value: 'artists', shortLabel: t('library.tabs.artists') },
+        { label: t('library.tabs.albums'), description: t('options.defaultLibraryTab.albumsDesc'), value: 'albums', shortLabel: t('library.tabs.albums') },
+        { label: t('library.tabs.songs'), description: t('options.defaultLibraryTab.songsDesc'), value: 'songs', shortLabel: t('library.tabs.songs') },
+    ], [t]);
+
+    const toastPositionOptions = useMemo<SettingSelectOption[]>(() => [
+        { label: t('settings.toastPosition.options.top'), value: 'top' },
+        { label: t('settings.toastPosition.options.bottom'), value: 'bottom' },
+    ], [t]);
+
     const styles = useMemo(() => StyleSheet.create({
         settings: {
             paddingTop: 10,
@@ -206,21 +213,21 @@ export default function Settings() {
 
     return (
         <Container>
-            <Header title="Settings" withBackIcon withAvatar={false} titleSize={20} />
+            <Header title={t('settings.title')} withBackIcon withAvatar={false} titleSize={20} />
             <ScrollView contentContainerStyle={{ paddingBottom: tabsHeight }}>
                 <View style={styles.settings}>
-                    <SettingsSection label='Launch' />
+                    <SettingsSection label={t('settings.sections.launch')} />
                     <Setting
                         id='app.persistQueue'
                         type='switch'
-                        label='Persist Queue on Restart'
-                        description='Save and restore your queue and playback state when restarting the app'
+                        label={t('settings.persistQueue.label')}
+                        description={t('settings.persistQueue.description')}
                     />
                     <Setting
                         id='app.defaultTab'
                         type='select'
-                        label='Default Tab'
-                        description='Which tab to open when launching the app'
+                        label={t('settings.defaultTab.label')}
+                        description={t('settings.defaultTab.description')}
                         icon={IconDoor}
                         defaultValue='home'
                         options={defaultTabOptions}
@@ -228,18 +235,18 @@ export default function Settings() {
                     <Setting
                         id='app.defaultLibraryTab'
                         type='select'
-                        label='Default Library Section'
-                        description='Which library section to show by default'
+                        label={t('settings.defaultLibraryTab.label')}
+                        description={t('settings.defaultLibraryTab.description')}
                         icon={IconLayoutGrid}
                         defaultValue='playlists'
                         options={defaultLibraryTabOptions}
                     />
-                    <SettingsSection label='Streaming Quality' />
+                    <SettingsSection label={t('settings.sections.streamingQuality')} />
                     <Setting
                         id='streaming.maxBitRate'
                         type='select'
-                        label='Max Bitrate'
-                        description='Maximum streaming bitrate (requires server transcoding)'
+                        label={t('settings.maxBitRate.label')}
+                        description={t('settings.maxBitRate.description')}
                         icon={IconVolume}
                         defaultValue='0'
                         options={maxBitRateOptions}
@@ -247,27 +254,27 @@ export default function Settings() {
                     <Setting
                         id='streaming.format'
                         type='select'
-                        label='Preferred Format'
-                        description='Preferred audio format for transcoding'
+                        label={t('settings.format.label')}
+                        description={t('settings.format.description')}
                         icon={IconFileMusic}
                         defaultValue='raw'
                         options={formatOptions}
                     />
-                    <SettingsSection label='Equalizer' />
+                    <SettingsSection label={t('settings.sections.equalizer')} />
                     <EQSection />
-                    <SettingsSection label='Downloads' />
+                    <SettingsSection label={t('settings.sections.downloads')} />
                     <Setting
                         id='downloads.wifiOnly'
                         type='switch'
-                        label='Wi-Fi Only Downloads'
-                        description='Only download music when connected to Wi-Fi'
+                        label={t('settings.wifiOnly.label')}
+                        description={t('settings.wifiOnly.description')}
                         icon={IconWifi}
                     />
                     <Setting
                         id='downloads.maxBitRate'
                         type='select'
-                        label='Max Bitrate'
-                        description='Maximum download bitrate (requires server transcoding)'
+                        label={t('settings.maxBitRate.label')}
+                        description={t('settings.maxBitRate.downloadDescription')}
                         icon={IconVolume}
                         defaultValue='0'
                         options={maxBitRateOptions}
@@ -275,26 +282,26 @@ export default function Settings() {
                     <Setting
                         id='downloads.format'
                         type='select'
-                        label='Preferred Format'
-                        description='Preferred audio format for downloaded music'
+                        label={t('settings.format.label')}
+                        description={t('settings.format.downloadDescription')}
                         icon={IconFileMusic}
                         defaultValue='raw'
                         options={formatOptions}
                     />
-                    <SettingsSection label='Storage' />
+                    <SettingsSection label={t('settings.sections.storage')} />
                     <Setting
                         id='storage.clearCache'
                         type='button'
-                        label='Clear Cache'
-                        description='This will not remove downloaded music'
+                        label={t('settings.clearCache.label')}
+                        description={t('settings.clearCache.description')}
                         onPress={async () => {
                             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
                             const confirmed = await SheetManager.show('confirm', {
                                 payload: {
-                                    title: 'Clear Cache',
-                                    message: 'Are you sure you want to clear the cache? This will not remove downloaded music.',
-                                    confirmText: 'Clear',
-                                    cancelText: 'Cancel',
+                                    title: t('settings.clearCache.confirmTitle'),
+                                    message: t('settings.clearCache.confirmMessage'),
+                                    confirmText: t('settings.clearCache.confirmButton'),
+                                    cancelText: t('settings.clearCache.cancelButton'),
                                 }
                             });
                             if (!confirmed) return;
@@ -303,44 +310,35 @@ export default function Settings() {
                             memoryCache.clear();
 
                             await showToast({
-                                title: 'Cache Cleared',
-                                subtitle: 'The cache has been cleared successfully.',
+                                title: t('settings.clearCache.successTitle'),
+                                subtitle: t('settings.clearCache.successSubtitle'),
                                 icon: IconCircleCheck,
                             });
                         }}
                     />
-                    <SettingsSection label='Layout' />
+                    <SettingsSection label={t('settings.sections.layout')} />
                     <Setting
                         id='ui.toastPosition'
                         type='select'
-                        label='Toast Position'
-                        description='Change the position of the toast notifications'
+                        label={t('settings.toastPosition.label')}
+                        description={t('settings.toastPosition.description')}
                         defaultValue='top'
-                        options={[
-                            {
-                                label: 'Top',
-                                value: 'top',
-                            },
-                            {
-                                label: 'Bottom',
-                                value: 'bottom',
-                            }
-                        ]}
+                        options={toastPositionOptions}
                     />
                     <Setting
                         id='ui.autoFocusSearchBar'
                         type='switch'
-                        label='Automatically Focus Search Bar'
-                        description='Focus the search bar automatically'
+                        label={t('settings.autoFocusSearch.label')}
+                        description={t('settings.autoFocusSearch.description')}
                     />
-                    <SettingsSection label='Developer Options' />
+                    <SettingsSection label={t('settings.sections.developer')} />
                     <Setting
                         id='developer.copyId'
                         type='switch'
-                        label='Copy ID Option'
-                        description='Show the copy ID option across the app'
+                        label={t('settings.copyId.label')}
+                        description={t('settings.copyId.description')}
                     />
-                    <SettingsSection label='Language' />
+                    <SettingsSection label={t('settings.sections.language')} />
                     <Setting
                         id='app.language'
                         type='select'

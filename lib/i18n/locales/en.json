@@ -1,9 +1,97 @@
 {
+  "common": {
+    "ok": "OK",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "delete": "Delete",
+    "edit": "Edit",
+    "save": "Save",
+    "create": "Create",
+    "close": "Close",
+    "back": "Back",
+    "next": "Next",
+    "done": "Done",
+    "continue": "Continue",
+    "clear": "Clear",
+    "error": "Error",
+    "loading": "Loading...",
+    "unknownArtist": "Unknown Artist",
+    "unknownAlbum": "Unknown Album"
+  },
   "tabs": {
     "home": "Home",
     "library": "Library",
     "downloads": "Downloads",
     "search": "Search"
+  },
+  "home": {
+    "title": "Home",
+    "pinned": "Pinned",
+    "playlists": "Playlists",
+    "random": "Shuffle",
+    "recentlyPlayed": "Recently Played",
+    "recentlyAdded": "Recently Added"
+  },
+  "library": {
+    "title": "Library",
+    "tabs": {
+      "playlists": "Playlists",
+      "artists": "Artists",
+      "albums": "Albums",
+      "songs": "Songs"
+    }
+  },
+  "search": {
+    "title": "Search",
+    "placeholder": "Search songs, artists, albums...",
+    "recentSearches": "Recent Searches",
+    "clear": "Clear",
+    "emptyLabel": "Search",
+    "emptyDescription": "Search for songs, artists, albums...",
+    "noResults": "No Results",
+    "noResultsSubtitle": "Try searching for something else",
+    "tabs": {
+      "all": "All",
+      "artists": "Artists",
+      "albums": "Albums",
+      "songs": "Songs"
+    },
+    "labels": {
+      "artist": "Artist",
+      "album": "Album",
+      "song": "Song",
+      "albumDetail": "Album • {{artist}} • {{year}}",
+      "songDetail": "Song • {{artist}}"
+    }
+  },
+  "downloads": {
+    "title": "Downloads",
+    "empty": "No Downloads",
+    "emptySubtitle": "Download tracks from the library to listen offline",
+    "downloadingSection": "Downloading",
+    "downloadedSection_one": "Downloaded • {{count}} track",
+    "downloadedSection_other": "Downloaded • {{count}} tracks",
+    "downloadingPlaceholder": "Downloading...",
+    "states": {
+      "waiting": "Waiting...",
+      "paused": "Paused • {{percentage}}%",
+      "finalizing": "Finalizing...",
+      "progress": "{{percentage}}% • {{downloaded}} / {{total}}"
+    },
+    "wifiOnly": {
+      "title": "Wi-Fi Only Mode",
+      "waiting_one": "{{count}} download waiting for Wi-Fi",
+      "waiting_other": "{{count}} downloads waiting for Wi-Fi",
+      "paused": "Downloads paused until Wi-Fi is available"
+    },
+    "deleteAll": "Delete All Downloads",
+    "deleteAllConfirm": {
+      "title": "Delete All Downloads",
+      "message": "Are you sure you want to delete all downloaded music? This cannot be undone.",
+      "confirm": "Delete All"
+    },
+    "deleteAllToast": "All Downloads Deleted",
+    "usedSpace": "{{size}} used"
   },
   "settings": {
     "title": "Settings",
@@ -60,7 +148,11 @@
     },
     "toastPosition": {
       "label": "Toast Position",
-      "description": "Change the position of the toast notifications"
+      "description": "Change the position of the toast notifications",
+      "options": {
+        "top": "Top",
+        "bottom": "Bottom"
+      }
     },
     "autoFocusSearch": {
       "label": "Automatically Focus Search Bar",
@@ -75,71 +167,160 @@
       "description": "Change the app interface language"
     }
   },
-  "tabs_options": {
-    "home": "Home",
-    "library": "Library",
-    "downloads": "Downloads",
-    "search": "Search"
-  },
-  "library_tabs": {
-    "playlists": "Playlists",
-    "artists": "Artists",
-    "albums": "Albums",
-    "songs": "Songs"
-  },
-  "bitrate_options": {
-    "original": "Original",
-    "original_desc": "No transcoding"
-  },
-  "format_options": {
-    "original": "Original",
-    "original_desc": "Server default format"
+  "options": {
+    "bitrate": {
+      "original": "Original",
+      "originalDesc": "No transcoding",
+      "high": "Highest quality transcode",
+      "highQuality": "High quality",
+      "goodQuality": "Good quality",
+      "standardQuality": "Standard quality",
+      "lowQuality": "Low quality",
+      "minQuality": "Minimum quality"
+    },
+    "format": {
+      "original": "Original",
+      "originalDesc": "Server default format",
+      "mp3": "Most compatible",
+      "opus": "Modern, efficient codec",
+      "aac": "Good quality, widely supported",
+      "ogg": "Open source format",
+      "oggLabel": "OGG Vorbis"
+    },
+    "defaultTab": {
+      "homeDesc": "Main home screen",
+      "libraryDesc": "Your music library",
+      "downloadsDesc": "Downloaded music",
+      "searchDesc": "Search for music"
+    },
+    "defaultLibraryTab": {
+      "playlistsDesc": "Your playlists",
+      "artistsDesc": "Browse by artist",
+      "albumsDesc": "Browse by album",
+      "songsDesc": "All songs"
+    }
   },
   "language_options": {
     "en": "English",
     "es": "Español"
   },
+  "login": {
+    "url": {
+      "title": "Welcome to Agin Music",
+      "description": "Agin Music is an open source OpenSubsonic client. Enter your server URL to get started.",
+      "placeholder": "Server URL...",
+      "demoButton": "Use Navidrome demo server",
+      "demoConfirmTitle": "Use Navidrome demo server",
+      "demoConfirmMessage": "The demo server is provided by Navidrome at https://demo.navidrome.org. Do you want to continue?",
+      "errorMessage": "Could not connect to server. Please check the URL and try again."
+    },
+    "password": {
+      "title": "Enter username and password",
+      "description": "Enter your username and password to get started.",
+      "usernamePlaceholder": "Username...",
+      "passwordPlaceholder": "Password...",
+      "legacyTitle": "Legacy Authentication",
+      "legacyDescription": "Use plain password for Nextcloud Music",
+      "errorMessage": "Username or password is incorrect. Please try again."
+    }
+  },
+  "notFound": {
+    "title": "Oops!"
+  },
   "player": {
     "loading": "Loading...",
     "notPlaying": "Not Playing",
     "clearQueue": "Clear Queue",
-    "clearQueueMessage": "Are you sure you want to clear the queue?",
-    "clear": "Clear",
-    "cancel": "Cancel"
+    "clearQueueMessage": "Are you sure you want to clear the queue?"
   },
-  "search": {
-    "placeholder": "Search",
-    "recentSearches": "Recent Searches",
-    "noResults": "No Results",
-    "noResultsSubtitle": "Try searching for something else"
-  },
-  "library": {
-    "title": "Library"
-  },
-  "home": {
-    "pinned": "Pinned",
-    "playlists": "Playlists",
-    "random": "Shuffle",
-    "recentlyPlayed": "Recently Played",
-    "recentlyAdded": "Recently Added"
-  },
-  "downloads": {
-    "title": "Downloads",
-    "empty": "No Downloads",
-    "emptySubtitle": "Your downloaded music will appear here"
-  },
-  "common": {
-    "ok": "OK",
-    "cancel": "Cancel",
-    "confirm": "Confirm",
-    "delete": "Delete",
-    "edit": "Edit",
-    "save": "Save",
-    "close": "Close",
-    "back": "Back",
-    "error": "Error",
-    "loading": "Loading...",
-    "unknownArtist": "Unknown Artist",
-    "unknownAlbum": "Unknown Album"
+  "sheets": {
+    "common": {
+      "copiedId": "Copied ID"
+    },
+    "album": {
+      "play": "Play",
+      "shuffle": "Shuffle",
+      "goToArtist": "Go to Artist",
+      "download": "Download Album",
+      "pin": "Pin Album",
+      "unpin": "Unpin Album",
+      "copyId": "Copy ID",
+      "addToPlaylist": "Add to a Playlist"
+    },
+    "artist": {
+      "playAll": "Play All",
+      "shuffleAll": "Shuffle All",
+      "downloadAll": "Download All",
+      "pin": "Pin Artist",
+      "unpin": "Unpin Artist",
+      "copyId": "Copy ID",
+      "subtitleArtist": "Artist",
+      "subtitleAlbums_one": "{{count}} album",
+      "subtitleAlbums_other": "{{count}} albums"
+    },
+    "playlist": {
+      "play": "Play",
+      "shuffle": "Shuffle",
+      "edit": "Edit Playlist",
+      "download": "Download Playlist",
+      "pin": "Pin Playlist",
+      "unpin": "Unpin Playlist",
+      "copyId": "Copy ID",
+      "addToPlaylist": "Add to a Playlist",
+      "remove": "Remove Playlist",
+      "removedToast": "Playlist Removed",
+      "subtitle_one": "{{count}} song • edited {{when}}",
+      "subtitle_other": "{{count}} songs • edited {{when}}"
+    },
+    "track": {
+      "playNext": "Play Next",
+      "addToQueue": "Add to Queue",
+      "goToArtist": "Go to Artist",
+      "goToAlbum": "Go to Album",
+      "removeDownload": "Remove Download",
+      "download": "Download",
+      "pin": "Pin Track",
+      "unpin": "Unpin Track",
+      "copyId": "Copy ID",
+      "addToPlaylist": "Add to a Playlist",
+      "removeFromPlaylist": "Remove from this Playlist",
+      "playingNext": "Playing Next",
+      "addedToQueue": "Added to Queue",
+      "removedFromPlaylist": "Removed from Playlist"
+    },
+    "userMenu": {
+      "appSettings": "App Settings",
+      "triggerScan": "Trigger Scan",
+      "contribute": "Contribute on GitHub",
+      "reportIssue": "Report an Issue",
+      "logOut": "Log out",
+      "logOutConfirmTitle": "Log out",
+      "logOutConfirmMessage": "Are you sure you want to log out?",
+      "scanTriggered": "Scan Triggered",
+      "scanTriggeredSubtitle": "The server is now scanning for new music.",
+      "scanFailed": "Scan Failed",
+      "scanFailedSubtitle": "Ensure that you have the correct permissions.",
+      "scanFinished": "Scan Finished",
+      "scanFinishedSubtitle": "Total tracks: {{count}}"
+    },
+    "addToPlaylist": {
+      "title": "Add to a Playlist",
+      "searchPlaceholder": "Search Playlists",
+      "newPlaylist": "New Playlist",
+      "addedSongs_one": "Added {{count}} song",
+      "addedSongs_other": "Added {{count}} songs"
+    },
+    "newPlaylist": {
+      "create": "Create Playlist",
+      "rename": "Rename Playlist",
+      "description": "Choose a name for your playlist",
+      "placeholder": "Choose a name...",
+      "saveButton": "Save",
+      "createButton": "Create"
+    },
+    "lyrics": {
+      "empty": "No lyrics available",
+      "emptyDescription": "No lyrics are available for this song."
+    }
   }
 }

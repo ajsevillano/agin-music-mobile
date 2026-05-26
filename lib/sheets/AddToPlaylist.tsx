@@ -11,12 +11,14 @@ import { IconPlus, IconSearch } from '@tabler/icons-react-native';
 import MediaLibraryList from '@lib/components/MediaLibraryList';
 import { TMediaLibItem } from '@lib/components/MediaLibraryList/Item';
 import showToast from '@lib/showToast';
+import { useTranslation } from 'react-i18next';
 
 function AddToPlaylistSheet({ sheetId, payload }: SheetProps<'addToPlaylist'>) {
     const insets = useSafeAreaInsets();
     const cache = useMemoryCache();
     const cover = useCoverBuilder();
     const api = useApi();
+    const { t } = useTranslation();
 
     const [filter, setFilter] = useState('');
 
@@ -30,11 +32,11 @@ function AddToPlaylistSheet({ sheetId, payload }: SheetProps<'addToPlaylist'>) {
 
     const playlists = useMemo((): TMediaLibItem[] => [{
         id: 'new',
-        title: 'New Playlist',
+        title: t('sheets.addToPlaylist.newPlaylist'),
         icon: IconPlus,
         coverUri: cover.generateUrl('', { size: 128 }),
         coverCacheKey: '-128x128',
-    }, ...rawPlaylists], [rawPlaylists]);
+    }, ...rawPlaylists], [rawPlaylists, t]);
 
     useEffect(() => {
         cache.refreshPlaylists();
@@ -67,7 +69,7 @@ function AddToPlaylistSheet({ sheetId, payload }: SheetProps<'addToPlaylist'>) {
         await showToast({
             cover: { uri: item.coverUri, cacheKey: item.coverCacheKey },
             title: item.title,
-            subtitle: `Added ${addedCount} song${addedCount > 1 ? 's' : ''}`,
+            subtitle: t('sheets.addToPlaylist.addedSongs', { count: addedCount }),
             reverse: true,
         });
 
@@ -99,8 +101,8 @@ function AddToPlaylistSheet({ sheetId, payload }: SheetProps<'addToPlaylist'>) {
             fullHeight
         >
             <View style={styles.container}>
-                <Title size={16} align="center" fontFamily="Poppins-SemiBold" style={styles.title}>Add to a Playlist</Title>
-                <Input icon={IconSearch} placeholder='Search Playlists' compact value={filter} onChangeText={setFilter} />
+                <Title size={16} align="center" fontFamily="Poppins-SemiBold" style={styles.title}>{t('sheets.addToPlaylist.title')}</Title>
+                <Input icon={IconSearch} placeholder={t('sheets.addToPlaylist.searchPlaceholder')} compact value={filter} onChangeText={setFilter} />
             </View>
             <MediaLibraryList
                 data={playlists}

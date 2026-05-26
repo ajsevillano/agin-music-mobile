@@ -1,9 +1,97 @@
 {
+  "common": {
+    "ok": "Aceptar",
+    "cancel": "Cancelar",
+    "confirm": "Confirmar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "save": "Guardar",
+    "create": "Crear",
+    "close": "Cerrar",
+    "back": "Atrás",
+    "next": "Siguiente",
+    "done": "Hecho",
+    "continue": "Continuar",
+    "clear": "Limpiar",
+    "error": "Error",
+    "loading": "Cargando...",
+    "unknownArtist": "Artista Desconocido",
+    "unknownAlbum": "Álbum Desconocido"
+  },
   "tabs": {
     "home": "Inicio",
     "library": "Biblioteca",
     "downloads": "Descargas",
     "search": "Buscar"
+  },
+  "home": {
+    "title": "Inicio",
+    "pinned": "Fijados",
+    "playlists": "Listas de reproducción",
+    "random": "Aleatorio",
+    "recentlyPlayed": "Escuchado Recientemente",
+    "recentlyAdded": "Añadido Recientemente"
+  },
+  "library": {
+    "title": "Biblioteca",
+    "tabs": {
+      "playlists": "Listas",
+      "artists": "Artistas",
+      "albums": "Álbumes",
+      "songs": "Canciones"
+    }
+  },
+  "search": {
+    "title": "Buscar",
+    "placeholder": "Buscar canciones, artistas, álbumes...",
+    "recentSearches": "Búsquedas Recientes",
+    "clear": "Limpiar",
+    "emptyLabel": "Buscar",
+    "emptyDescription": "Busca canciones, artistas, álbumes...",
+    "noResults": "Sin Resultados",
+    "noResultsSubtitle": "Prueba a buscar otra cosa",
+    "tabs": {
+      "all": "Todo",
+      "artists": "Artistas",
+      "albums": "Álbumes",
+      "songs": "Canciones"
+    },
+    "labels": {
+      "artist": "Artista",
+      "album": "Álbum",
+      "song": "Canción",
+      "albumDetail": "Álbum • {{artist}} • {{year}}",
+      "songDetail": "Canción • {{artist}}"
+    }
+  },
+  "downloads": {
+    "title": "Descargas",
+    "empty": "Sin Descargas",
+    "emptySubtitle": "Descarga canciones desde la biblioteca para escucharlas sin conexión",
+    "downloadingSection": "Descargando",
+    "downloadedSection_one": "Descargada • {{count}} canción",
+    "downloadedSection_other": "Descargadas • {{count}} canciones",
+    "downloadingPlaceholder": "Descargando...",
+    "states": {
+      "waiting": "En espera...",
+      "paused": "Pausado • {{percentage}}%",
+      "finalizing": "Finalizando...",
+      "progress": "{{percentage}}% • {{downloaded}} / {{total}}"
+    },
+    "wifiOnly": {
+      "title": "Modo Solo Wi-Fi",
+      "waiting_one": "{{count}} descarga esperando Wi-Fi",
+      "waiting_other": "{{count}} descargas esperando Wi-Fi",
+      "paused": "Descargas en pausa hasta que haya Wi-Fi"
+    },
+    "deleteAll": "Eliminar Todas las Descargas",
+    "deleteAllConfirm": {
+      "title": "Eliminar Todas las Descargas",
+      "message": "¿Seguro que quieres eliminar toda la música descargada? Esta acción no se puede deshacer.",
+      "confirm": "Eliminar Todo"
+    },
+    "deleteAllToast": "Todas las Descargas Eliminadas",
+    "usedSpace": "{{size}} en uso"
   },
   "settings": {
     "title": "Ajustes",
@@ -60,7 +148,11 @@
     },
     "toastPosition": {
       "label": "Posición de Notificaciones",
-      "description": "Cambia la posición de las notificaciones emergentes"
+      "description": "Cambia la posición de las notificaciones emergentes",
+      "options": {
+        "top": "Arriba",
+        "bottom": "Abajo"
+      }
     },
     "autoFocusSearch": {
       "label": "Enfocar Barra de Búsqueda Automáticamente",
@@ -75,71 +167,160 @@
       "description": "Cambiar el idioma de la interfaz"
     }
   },
-  "tabs_options": {
-    "home": "Inicio",
-    "library": "Biblioteca",
-    "downloads": "Descargas",
-    "search": "Buscar"
-  },
-  "library_tabs": {
-    "playlists": "Listas de reproducción",
-    "artists": "Artistas",
-    "albums": "Álbumes",
-    "songs": "Canciones"
-  },
-  "bitrate_options": {
-    "original": "Original",
-    "original_desc": "Sin transcodificación"
-  },
-  "format_options": {
-    "original": "Original",
-    "original_desc": "Formato por defecto del servidor"
+  "options": {
+    "bitrate": {
+      "original": "Original",
+      "originalDesc": "Sin transcodificación",
+      "high": "Máxima calidad de transcodificación",
+      "highQuality": "Alta calidad",
+      "goodQuality": "Buena calidad",
+      "standardQuality": "Calidad estándar",
+      "lowQuality": "Baja calidad",
+      "minQuality": "Calidad mínima"
+    },
+    "format": {
+      "original": "Original",
+      "originalDesc": "Formato por defecto del servidor",
+      "mp3": "Máxima compatibilidad",
+      "opus": "Códec moderno y eficiente",
+      "aac": "Buena calidad, ampliamente soportado",
+      "ogg": "Formato de código abierto",
+      "oggLabel": "OGG Vorbis"
+    },
+    "defaultTab": {
+      "homeDesc": "Pantalla principal",
+      "libraryDesc": "Tu biblioteca de música",
+      "downloadsDesc": "Música descargada",
+      "searchDesc": "Buscar música"
+    },
+    "defaultLibraryTab": {
+      "playlistsDesc": "Tus listas de reproducción",
+      "artistsDesc": "Explorar por artista",
+      "albumsDesc": "Explorar por álbum",
+      "songsDesc": "Todas las canciones"
+    }
   },
   "language_options": {
     "en": "English",
     "es": "Español"
   },
+  "login": {
+    "url": {
+      "title": "Bienvenido a Agin Music",
+      "description": "Agin Music es un cliente OpenSubsonic de código abierto. Introduce la URL de tu servidor para empezar.",
+      "placeholder": "URL del servidor...",
+      "demoButton": "Usar servidor demo de Navidrome",
+      "demoConfirmTitle": "Usar servidor demo de Navidrome",
+      "demoConfirmMessage": "El servidor demo lo proporciona Navidrome en https://demo.navidrome.org. ¿Quieres continuar?",
+      "errorMessage": "No se pudo conectar al servidor. Comprueba la URL e inténtalo de nuevo."
+    },
+    "password": {
+      "title": "Introduce usuario y contraseña",
+      "description": "Introduce tu usuario y contraseña para empezar.",
+      "usernamePlaceholder": "Usuario...",
+      "passwordPlaceholder": "Contraseña...",
+      "legacyTitle": "Autenticación heredada",
+      "legacyDescription": "Usar contraseña en texto plano para Nextcloud Music",
+      "errorMessage": "El usuario o la contraseña son incorrectos. Inténtalo de nuevo."
+    }
+  },
+  "notFound": {
+    "title": "¡Vaya!"
+  },
   "player": {
     "loading": "Cargando...",
     "notPlaying": "Sin reproducción",
     "clearQueue": "Limpiar Cola",
-    "clearQueueMessage": "¿Seguro que quieres limpiar la cola?",
-    "clear": "Limpiar",
-    "cancel": "Cancelar"
+    "clearQueueMessage": "¿Seguro que quieres limpiar la cola?"
   },
-  "search": {
-    "placeholder": "Buscar",
-    "recentSearches": "Búsquedas Recientes",
-    "noResults": "Sin Resultados",
-    "noResultsSubtitle": "Prueba a buscar otra cosa"
-  },
-  "library": {
-    "title": "Biblioteca"
-  },
-  "home": {
-    "pinned": "Fijados",
-    "playlists": "Listas de reproducción",
-    "random": "Aleatorio",
-    "recentlyPlayed": "Escuchado Recientemente",
-    "recentlyAdded": "Añadido Recientemente"
-  },
-  "downloads": {
-    "title": "Descargas",
-    "empty": "Sin Descargas",
-    "emptySubtitle": "Tu música descargada aparecerá aquí"
-  },
-  "common": {
-    "ok": "Aceptar",
-    "cancel": "Cancelar",
-    "confirm": "Confirmar",
-    "delete": "Eliminar",
-    "edit": "Editar",
-    "save": "Guardar",
-    "close": "Cerrar",
-    "back": "Atrás",
-    "error": "Error",
-    "loading": "Cargando...",
-    "unknownArtist": "Artista Desconocido",
-    "unknownAlbum": "Álbum Desconocido"
+  "sheets": {
+    "common": {
+      "copiedId": "ID Copiado"
+    },
+    "album": {
+      "play": "Reproducir",
+      "shuffle": "Aleatorio",
+      "goToArtist": "Ir al Artista",
+      "download": "Descargar Álbum",
+      "pin": "Fijar Álbum",
+      "unpin": "Quitar Fijado",
+      "copyId": "Copiar ID",
+      "addToPlaylist": "Añadir a una Lista"
+    },
+    "artist": {
+      "playAll": "Reproducir Todo",
+      "shuffleAll": "Aleatorio Todo",
+      "downloadAll": "Descargar Todo",
+      "pin": "Fijar Artista",
+      "unpin": "Quitar Fijado",
+      "copyId": "Copiar ID",
+      "subtitleArtist": "Artista",
+      "subtitleAlbums_one": "{{count}} álbum",
+      "subtitleAlbums_other": "{{count}} álbumes"
+    },
+    "playlist": {
+      "play": "Reproducir",
+      "shuffle": "Aleatorio",
+      "edit": "Editar Lista",
+      "download": "Descargar Lista",
+      "pin": "Fijar Lista",
+      "unpin": "Quitar Fijado",
+      "copyId": "Copiar ID",
+      "addToPlaylist": "Añadir a una Lista",
+      "remove": "Eliminar Lista",
+      "removedToast": "Lista Eliminada",
+      "subtitle_one": "{{count}} canción • editada {{when}}",
+      "subtitle_other": "{{count}} canciones • editada {{when}}"
+    },
+    "track": {
+      "playNext": "Reproducir Siguiente",
+      "addToQueue": "Añadir a la Cola",
+      "goToArtist": "Ir al Artista",
+      "goToAlbum": "Ir al Álbum",
+      "removeDownload": "Eliminar Descarga",
+      "download": "Descargar",
+      "pin": "Fijar Canción",
+      "unpin": "Quitar Fijado",
+      "copyId": "Copiar ID",
+      "addToPlaylist": "Añadir a una Lista",
+      "removeFromPlaylist": "Quitar de esta Lista",
+      "playingNext": "Siguiente en la Cola",
+      "addedToQueue": "Añadida a la Cola",
+      "removedFromPlaylist": "Eliminada de la Lista"
+    },
+    "userMenu": {
+      "appSettings": "Ajustes de la App",
+      "triggerScan": "Lanzar Escaneo",
+      "contribute": "Contribuir en GitHub",
+      "reportIssue": "Reportar un Problema",
+      "logOut": "Cerrar sesión",
+      "logOutConfirmTitle": "Cerrar sesión",
+      "logOutConfirmMessage": "¿Seguro que quieres cerrar sesión?",
+      "scanTriggered": "Escaneo Lanzado",
+      "scanTriggeredSubtitle": "El servidor está buscando nueva música.",
+      "scanFailed": "Escaneo Fallido",
+      "scanFailedSubtitle": "Asegúrate de tener los permisos correctos.",
+      "scanFinished": "Escaneo Terminado",
+      "scanFinishedSubtitle": "Canciones totales: {{count}}"
+    },
+    "addToPlaylist": {
+      "title": "Añadir a una Lista",
+      "searchPlaceholder": "Buscar Listas",
+      "newPlaylist": "Nueva Lista",
+      "addedSongs_one": "{{count}} canción añadida",
+      "addedSongs_other": "{{count}} canciones añadidas"
+    },
+    "newPlaylist": {
+      "create": "Crear Lista",
+      "rename": "Renombrar Lista",
+      "description": "Elige un nombre para tu lista",
+      "placeholder": "Elige un nombre...",
+      "saveButton": "Guardar",
+      "createButton": "Crear"
+    },
+    "lyrics": {
+      "empty": "Letras no disponibles",
+      "emptyDescription": "No hay letras disponibles para esta canción."
+    }
   }
 }
