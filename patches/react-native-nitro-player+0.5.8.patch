@@ -1,7 +1,27 @@
+diff --git a/node_modules/react-native-nitro-player/android/src/main/AndroidManifest.xml b/node_modules/react-native-nitro-player/android/src/main/AndroidManifest.xml
+--- a/node_modules/react-native-nitro-player/android/src/main/AndroidManifest.xml
++++ b/node_modules/react-native-nitro-player/android/src/main/AndroidManifest.xml
+@@ -4,6 +4,8 @@
+     <uses-permission android:name="android.permission.INTERNET" />
+     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
++    <!-- Required by ExoPlayer setWakeMode to keep CPU/WiFi alive during background streaming (Doze mode) -->
++    <uses-permission android:name="android.permission.WAKE_LOCK" />
+     
+     <application>
+         <!-- WorkManager's SystemForegroundService for download notifications -->
 diff --git a/node_modules/react-native-nitro-player/android/src/main/java/com/margelo/nitro/nitroplayer/core/TrackPlayerCore.kt b/node_modules/react-native-nitro-player/android/src/main/java/com/margelo/nitro/nitroplayer/core/TrackPlayerCore.kt
 index 6132a34..1a650d5 100644
 --- a/node_modules/react-native-nitro-player/android/src/main/java/com/margelo/nitro/nitroplayer/core/TrackPlayerCore.kt
 +++ b/node_modules/react-native-nitro-player/android/src/main/java/com/margelo/nitro/nitroplayer/core/TrackPlayerCore.kt
+@@ -149,6 +149,7 @@ class TrackPlayerCore private constructor(
+                         .setAudioAttributes(audioAttributes, true) // handleAudioFocus = true for gapless
+                         .setHandleAudioBecomingNoisy(true) // Pause when headphones disconnected
+                         .setPauseAtEndOfMediaItems(false) // Don't pause between items - key for gapless!
++                        .setWakeMode(C.WAKE_MODE_NETWORK) // Keep CPU/WiFi alive while playing to survive Doze
+                         .build()
+ 
+                 mediaSessionManager =
 @@ -443,6 +443,29 @@ class TrackPlayerCore private constructor(
          }
      }
