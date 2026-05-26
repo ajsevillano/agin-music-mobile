@@ -4,8 +4,12 @@ import { TMediaLibItem } from '@lib/components/MediaLibraryList/Item';
 import { useCoverBuilder, useHomeItemActions, useMemoryCache } from '@/lib/hooks';
 import { useFocusEffect } from 'expo-router';
 import { useCallback } from 'react';
+import { IconMicrophone2Off } from '@tabler/icons-react-native';
+import { useTranslation } from 'react-i18next';
+import FullscreenMessage from '@lib/components/FullscreenMessage';
 
 export function ArtistsTab() {
+    const { t } = useTranslation();
     const cache = useMemoryCache();
     const cover = useCoverBuilder();
     const { press, longPress } = useHomeItemActions();
@@ -36,6 +40,7 @@ export function ArtistsTab() {
             onItemLongPress={longPress}
             layout={layout}
             extraData={cache.cache.allArtists}
+            ListEmptyComponent={<FullscreenMessage animated icon={IconMicrophone2Off} label={t('library.empty.artists.title')} description={t('library.empty.artists.description')} />}
         />
     )
 }

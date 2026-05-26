@@ -4,8 +4,12 @@ import { TMediaLibItem } from '@lib/components/MediaLibraryList/Item';
 import { useCoverBuilder, useHomeItemActions, useMemoryCache } from '@/lib/hooks';
 import { formatDistanceToNow } from 'date-fns';
 import { router, useFocusEffect } from 'expo-router';
+import { IconPlaylistOff } from '@tabler/icons-react-native';
+import { useTranslation } from 'react-i18next';
+import FullscreenMessage from '@lib/components/FullscreenMessage';
 
 export function PlaylistsTab() {
+    const { t } = useTranslation();
     const cache = useMemoryCache();
     const cover = useCoverBuilder();
 
@@ -37,6 +41,7 @@ export function PlaylistsTab() {
             onItemLongPress={longPress}
             layout={layout}
             extraData={cache.cache.allPlaylists}
+            ListEmptyComponent={<FullscreenMessage animated icon={IconPlaylistOff} label={t('library.empty.playlists.title')} description={t('library.empty.playlists.description')} />}
         />
     )
 }
