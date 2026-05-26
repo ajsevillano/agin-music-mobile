@@ -39,6 +39,24 @@
       "artists": "Artists",
       "albums": "Albums",
       "songs": "Songs"
+    },
+    "empty": {
+      "playlists": {
+        "title": "No playlists yet",
+        "description": "Create a playlist or pin one from your server to see it here."
+      },
+      "artists": {
+        "title": "No artists found",
+        "description": "Your library doesn't have any artists yet."
+      },
+      "albums": {
+        "title": "No albums found",
+        "description": "Your library doesn't have any albums yet."
+      },
+      "songs": {
+        "title": "No songs found",
+        "description": "Your library doesn't have any songs yet."
+      }
     }
   },
   "search": {
@@ -48,8 +66,10 @@
     "clear": "Clear",
     "emptyLabel": "Search",
     "emptyDescription": "Search for songs, artists, albums...",
-    "noResults": "No Results",
-    "noResultsSubtitle": "Try searching for something else",
+    "noResults": {
+      "title": "No results for \"{{query}}\"",
+      "description": "Try a different spelling or another keyword."
+    },
     "tabs": {
       "all": "All",
       "artists": "Artists",
