@@ -1,6 +1,6 @@
 import { createContext, useCallback, useEffect, useState } from 'react';
 import { AlbumID3, AlbumList2, AlbumWithSongsID3, ArtistID3, ArtistsID3, Child, Playlist, PlaylistWithSongs } from '@lib/types';
-import { useApi, useServer } from '@lib/hooks';
+import { useApi, useConnection, useServer } from '@lib/hooks';
 
 export type MemoryCache = {
     allPlaylists: Playlist[];
@@ -46,6 +46,7 @@ export default function MemoryCacheProvider({ children }: { children?: React.Rea
     const [cache, setCache] = useState<MemoryCache>(initialCache.cache);
     const api = useApi();
     const { server } = useServer();
+    const { markServerOk, markServerUnreachable, retryToken } = useConnection();
 
     const clear = useCallback(() => {
         setCache(initialCache.cache);
@@ -54,74 +55,104 @@ export default function MemoryCacheProvider({ children }: { children?: React.Rea
     const refreshPlaylists = useCallback(async () => {
         if (!api) return;
 
-        const playlistsRes = await api.get('/getPlaylists');
-        const playlists = playlistsRes.data?.['subsonic-response']?.playlists?.playlist as Playlist[];
-        if (!playlists) return;
+        try {
+            const playlistsRes = await api.get('/getPlaylists');
+            const playlists = playlistsRes.data?.['subsonic-response']?.playlists?.playlist as Playlist[];
+            markServerOk();
+            if (!playlists) return;
 
-        setCache(c => ({ ...c, allPlaylists: playlists }));
-        return playlists;
-    }, [api, server.url]);
+            setCache(c => ({ ...c, allPlaylists: playlists }));
+            return playlists;
+        } catch {
+            markServerUnreachable();
+        }
+    }, [api, server.url, markServerOk, markServerUnreachable, retryToken]);
 
     const refreshPlaylist = useCallback(async (id: string) => {
         if (!api) return;
 
-        const playlistRes = await api.get('/getPlaylist', { params: { id } });
-        const playlist = playlistRes.data?.['subsonic-response']?.playlist as PlaylistWithSongs;
-        if (!playlist) return;
+        try {
+            const playlistRes = await api.get('/getPlaylist', { params: { id } });
+            const playlist = playlistRes.data?.['subsonic-response']?.playlist as PlaylistWithSongs;
+            markServerOk();
+            if (!playlist) return;
 
-        setCache(c => ({ ...c, playlists: { ...c.playlists, [id]: playlist } }));
-        return playlist;
-    }, [api, server.url]);
+            setCache(c => ({ ...c, playlists: { ...c.playlists, [id]: playlist } }));
+            return playlist;
+        } catch {
+            markServerUnreachable();
+        }
+    }, [api, server.url, markServerOk, markServerUnreachable, retryToken]);
 
     const refreshAlbums = useCallback(async () => {
         // TODO: Add pagination support
         if (!api) return;
 
-        const albumsRes = await api.get('/getAlbumList2', { params: { type: 'alphabeticalByName', size: 500 } });
-        const albums = albumsRes.data?.['subsonic-response']?.albumList2?.album as AlbumID3[];
-        if (!albums) return;
+        try {
+            const albumsRes = await api.get('/getAlbumList2', { params: { type: 'alphabeticalByName', size: 500 } });
+            const albums = albumsRes.data?.['subsonic-response']?.albumList2?.album as AlbumID3[];
+            markServerOk();
+            if (!albums) return;
 
-        setCache(c => ({ ...c, allAlbums: albums }));
-        return albums;
-    }, [api, server.url]);
+            setCache(c => ({ ...c, allAlbums: albums }));
+            return albums;
+        } catch {
+            markServerUnreachable();
+        }
+    }, [api, server.url, markServerOk, markServerUnreachable, retryToken]);
 
     const refreshAlbum = useCallback(async (id: string) => {
         if (!api) return;
 
-        const albumRes = await api.get('/getAlbum', { params: { id } });
-        const album = albumRes.data?.['subsonic-response']?.album as AlbumWithSongsID3;
-        if (!album) return;
+        try {
+            const albumRes = await api.get('/getAlbum', { params: { id } });
+            const album = albumRes.data?.['subsonic-response']?.album as AlbumWithSongsID3;
+            markServerOk();
+            if (!album) return;
 
-        setCache(c => ({ ...c, albums: { ...c.albums, [id]: album } }));
-        return album;
-    }, [api, server.url]);
+            setCache(c => ({ ...c, albums: { ...c.albums, [id]: album } }));
+            return album;
+        } catch {
+            markServerUnreachable();
+        }
+    }, [api, server.url, markServerOk, markServerUnreachable, retryToken]);
 
     const refreshArtists = useCallback(async () => {
         if (!api) return;
 
-        const artistsRes = await api.get('/getArtists');
-        const artistsData = artistsRes.data?.['subsonic-response']?.artists as ArtistsID3;
-        if (!artistsData?.index) return;
+        try {
+            const artistsRes = await api.get('/getArtists');
+            const artistsData = artistsRes.data?.['subsonic-response']?.artists as ArtistsID3;
+            markServerOk();
+            if (!artistsData?.index) return;
 
-        const artists: ArtistID3[] = artistsData.index.flatMap(idx => idx.artist ?? []);
-        setCache(c => ({ ...c, allArtists: artists }));
-        return artists;
-    }, [api, server.url]);
+            const artists: ArtistID3[] = artistsData.index.flatMap(idx => idx.artist ?? []);
+            setCache(c => ({ ...c, allArtists: artists }));
+            return artists;
+        } catch {
+            markServerUnreachable();
+        }
+    }, [api, server.url, markServerOk, markServerUnreachable, retryToken]);
 
     const refreshSongs = useCallback(async () => {
         if (!api) return;
 
-        const songsRes = await api.get('/getRandomSongs', { params: { size: 500 } });
-        const songs = songsRes.data?.['subsonic-response']?.randomSongs?.song as Child[];
-        if (!songs) return;
+        try {
+            const songsRes = await api.get('/getRandomSongs', { params: { size: 500 } });
+            const songs = songsRes.data?.['subsonic-response']?.randomSongs?.song as Child[];
+            markServerOk();
+            if (!songs) return;
 
-        const sorted = [...songs].sort((a, b) =>
-            (a.title ?? '').localeCompare(b.title ?? '', undefined, { sensitivity: 'base' })
-        );
+            const sorted = [...songs].sort((a, b) =>
+                (a.title ?? '').localeCompare(b.title ?? '', undefined, { sensitivity: 'base' })
+            );
 
-        setCache(c => ({ ...c, allSongs: sorted }));
-        return sorted;
-    }, [api, server.url]);
+            setCache(c => ({ ...c, allSongs: sorted }));
+            return sorted;
+        } catch {
+            markServerUnreachable();
+        }
+    }, [api, server.url, markServerOk, markServerUnreachable, retryToken]);
 
     // Prefetch the data
     useEffect(() => {

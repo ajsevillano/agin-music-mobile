@@ -24,6 +24,7 @@ import ToastWrapper from '@lib/components/ToastWrapper';
 import SearchHistoryProvider from '@lib/providers/SearchHistoryProvider';
 import PinsProvider from '@lib/providers/PinsProvider';
 import DownloadProvider from '@lib/providers/DownloadProvider';
+import ConnectionProvider from '@lib/providers/ConnectionProvider';
 import { registerWidgetTaskHandler } from 'react-native-android-widget';
 import { widgetTaskHandler } from '@lib/widget-task-handler';
 import { I18nextProvider } from 'react-i18next';
@@ -91,6 +92,7 @@ export default function RootLayout() {
         <SQLiteProvider databaseName="cache.db" onInit={initDatabase}>
           <TabsHeightProvider>
             <ServerProvider>
+              <ConnectionProvider>
               <SearchHistoryProvider>
                 <QueueProvider>
                   <DownloadProvider>
@@ -113,6 +115,7 @@ export default function RootLayout() {
                   </DownloadProvider>
                 </QueueProvider>
               </SearchHistoryProvider>
+              </ConnectionProvider>
             </ServerProvider>
           </TabsHeightProvider>
         </SQLiteProvider>

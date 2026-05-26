@@ -24,6 +24,18 @@
     "downloads": "Descargas",
     "search": "Buscar"
   },
+  "connection": {
+    "retry": "Reintentar",
+    "viewDownloads": "Ver mis descargas",
+    "offline": {
+      "title": "Sin conexión a Internet",
+      "description": "Comprueba tu Wi-Fi o tus datos móviles e inténtalo de nuevo."
+    },
+    "serverUnreachable": {
+      "title": "No se puede contactar con el servidor",
+      "description": "Tu servidor Navidrome no responde. Revisa la URL, tu VPN o si estás en la misma red."
+    }
+  },
   "home": {
     "title": "Inicio",
     "pinned": "Fijados",
@@ -39,6 +51,24 @@
       "artists": "Artistas",
       "albums": "Álbumes",
       "songs": "Canciones"
+    },
+    "empty": {
+      "playlists": {
+        "title": "Aún no hay listas",
+        "description": "Crea una lista o fija una desde tu servidor para verla aquí."
+      },
+      "artists": {
+        "title": "No se encontraron artistas",
+        "description": "Tu biblioteca aún no tiene artistas."
+      },
+      "albums": {
+        "title": "No se encontraron álbumes",
+        "description": "Tu biblioteca aún no tiene álbumes."
+      },
+      "songs": {
+        "title": "No se encontraron canciones",
+        "description": "Tu biblioteca aún no tiene canciones."
+      }
     }
   },
   "search": {
@@ -48,8 +78,10 @@
     "clear": "Limpiar",
     "emptyLabel": "Buscar",
     "emptyDescription": "Busca canciones, artistas, álbumes...",
-    "noResults": "Sin Resultados",
-    "noResultsSubtitle": "Prueba a buscar otra cosa",
+    "noResults": {
+      "title": "Sin resultados para \"{{query}}\"",
+      "description": "Prueba con otra palabra o revisa la ortografía."
+    },
     "tabs": {
       "all": "Todo",
       "artists": "Artistas",

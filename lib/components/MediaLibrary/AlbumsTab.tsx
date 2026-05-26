@@ -1,10 +1,16 @@
 import React, { useCallback, useContext, useEffect, useMemo } from 'react';
 import MediaLibraryList, { LibLayout } from '@lib/components/MediaLibraryList';
 import { TMediaLibItem } from '@lib/components/MediaLibraryList/Item';
-import { useCoverBuilder, useHomeItemActions, useMemoryCache } from '@/lib/hooks';
+import { useConnection, useCoverBuilder, useHomeItemActions, useMemoryCache } from '@/lib/hooks';
 import { router, useFocusEffect } from 'expo-router';
+import { IconDiscOff } from '@tabler/icons-react-native';
+import { useTranslation } from 'react-i18next';
+import FullscreenMessage from '@lib/components/FullscreenMessage';
+import ConnectionError from '@lib/components/ConnectionError';
 
 export function AlbumsTab() {
+    const { t } = useTranslation();
+    const { hasConnectionIssue } = useConnection();
     const cache = useMemoryCache();
     const cover = useCoverBuilder();
 
@@ -36,6 +42,9 @@ export function AlbumsTab() {
             onItemLongPress={longPress}
             layout={layout}
             extraData={cache.cache.allAlbums}
+            ListEmptyComponent={hasConnectionIssue
+                ? <ConnectionError />
+                : <FullscreenMessage animated icon={IconDiscOff} label={t('library.empty.albums.title')} description={t('library.empty.albums.description')} />}
         />
     )
 }

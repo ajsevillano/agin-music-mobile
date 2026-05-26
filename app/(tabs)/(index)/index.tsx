@@ -1,7 +1,8 @@
 import Container from '@lib/components/Container';
+import ConnectionError from '@lib/components/ConnectionError';
 import Header from '@lib/components/Header';
 import { Pinned, Playlists, Random, RecentlyAdded, RecentlyPlayed } from '@lib/components/HomeSections';
-import { useQueue, useServer, useTabsHeight } from '@lib/hooks';
+import { useConnection, useQueue, useServer, useTabsHeight } from '@lib/hooks';
 import { router, useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useMemo } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
@@ -11,6 +12,7 @@ export default function Home() {
     const [tabsHeight] = useTabsHeight();
     const queue = useQueue();
     const { t } = useTranslation();
+    const { hasConnectionIssue } = useConnection();
 
     const localParams = useLocalSearchParams();
     const playId = useMemo(() => localParams?.playId, [localParams]);
@@ -35,15 +37,19 @@ export default function Home() {
 
     return (
         <Container>
-            <ScrollView style={styles.main}>
-                <Header title={t('home.title')} withAvatar />
-                <Pinned />
-                <RecentlyPlayed />
-                <RecentlyAdded />
-                <Playlists />
-                <Random />
-                <View style={styles.spacer}></View>
-            </ScrollView>
+            <Header title={t('home.title')} withAvatar />
+            {hasConnectionIssue ? (
+                <ConnectionError />
+            ) : (
+                <ScrollView style={styles.main}>
+                    <Pinned />
+                    <RecentlyPlayed />
+                    <RecentlyAdded />
+                    <Playlists />
+                    <Random />
+                    <View style={styles.spacer}></View>
+                </ScrollView>
+            )}
         </Container>
     )
 }

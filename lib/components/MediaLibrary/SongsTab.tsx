@@ -1,9 +1,15 @@
 import React, { useCallback, useContext, useEffect, useMemo } from 'react';
 import MediaLibraryList, { LibLayout } from '@lib/components/MediaLibraryList';
 import { TMediaLibItem } from '@lib/components/MediaLibraryList/Item';
-import { useCoverBuilder, useHomeItemActions, useMemoryCache, useQueue } from '@/lib/hooks';
+import { useConnection, useCoverBuilder, useHomeItemActions, useMemoryCache, useQueue } from '@/lib/hooks';
+import { IconMusicOff } from '@tabler/icons-react-native';
+import { useTranslation } from 'react-i18next';
+import FullscreenMessage from '@lib/components/FullscreenMessage';
+import ConnectionError from '@lib/components/ConnectionError';
 
 export function SongsTab() {
+    const { t } = useTranslation();
+    const { hasConnectionIssue } = useConnection();
     const cache = useMemoryCache();
     const cover = useCoverBuilder();
     const queue = useQueue();
@@ -44,6 +50,9 @@ export function SongsTab() {
             onItemLongPress={longPress}
             layout={layout}
             extraData={cache.cache.allSongs}
+            ListEmptyComponent={hasConnectionIssue
+                ? <ConnectionError />
+                : <FullscreenMessage animated icon={IconMusicOff} label={t('library.empty.songs.title')} description={t('library.empty.songs.description')} />}
         />
     )
 }
