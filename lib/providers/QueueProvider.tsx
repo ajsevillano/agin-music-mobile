@@ -173,11 +173,10 @@ export default function QueueProvider({ children }: { children?: React.ReactNode
 
     const updateNowPlaying = useCallback(async () => {
         try {
-            const state = await TrackPlayer.getState();
+            const currentIndex = await TrackPlayer.getCurrentTrackIndex();
             const currentQueue = await TrackPlayer.getActualQueue();
-            if (!currentQueue || currentQueue.length === 0) return;
+            if (currentIndex < 0 || !currentQueue || currentQueue.length === 0) return;
 
-            const currentIndex = state?.currentIndex ?? 0;
             const track = currentQueue[currentIndex];
             if (!track) return;
 
@@ -221,9 +220,10 @@ export default function QueueProvider({ children }: { children?: React.ReactNode
 
     const updateActive = useCallback(async () => {
         try {
-            const state = await TrackPlayer.getState();
-            const currentIndex = state?.currentIndex ?? 0;
-            setActiveIndex(currentIndex);
+            const currentIndex = await TrackPlayer.getCurrentTrackIndex();
+            if (currentIndex >= 0) {
+                setActiveIndex(currentIndex);
+            }
         } catch (e) {
             // Error updating active index
         }
@@ -291,11 +291,23 @@ export default function QueueProvider({ children }: { children?: React.ReactNode
     const { track: changedTrack } = useOnChangeTrack();
 
     useEffect(() => {
-        if (changedTrack) {
-            updateNowPlaying();
-            updateActive();
+        if (!changedTrack) return;
+
+        const child = trackChildMapRef.current.get(changedTrack.id);
+        if (child) {
+            setNowPlaying(child);
+        } else {
+            setNowPlaying({
+                id: changedTrack.id,
+                isDir: false,
+                title: changedTrack.title,
+                artist: changedTrack.artist,
+                album: changedTrack.album,
+                duration: changedTrack.duration,
+            });
         }
-    }, [changedTrack, updateNowPlaying, updateActive]);
+        updateActive();
+    }, [changedTrack, updateActive]);
 
     const modifyQueue = useCallback(async (tracks: TQueueItem[]): Promise<void> => {
         try {
@@ -424,8 +436,8 @@ export default function QueueProvider({ children }: { children?: React.ReactNode
         TrackPlayer.play();
 
         setNowPlaying(itemsCopy[initialIndex]);
+        setActiveIndex(initialIndex);
         await updateQueue();
-        await updateActive();
     }, [convertToTrackItem, loadTracks]);
 
     const clear = useCallback(async () => {
