@@ -24,6 +24,18 @@
     "downloads": "Descargas",
     "search": "Buscar"
   },
+  "connection": {
+    "retry": "Reintentar",
+    "viewDownloads": "Ver mis descargas",
+    "offline": {
+      "title": "Sin conexión a Internet",
+      "description": "Comprueba tu Wi-Fi o tus datos móviles e inténtalo de nuevo."
+    },
+    "serverUnreachable": {
+      "title": "No se puede contactar con el servidor",
+      "description": "Tu servidor Navidrome no responde. Revisa la URL, tu VPN o si estás en la misma red."
+    }
+  },
   "home": {
     "title": "Inicio",
     "pinned": "Fijados",

@@ -1,4 +1,4 @@
-import { useApi, useColors, useCoverBuilder, useHomeItemActions } from '@lib/hooks';
+import { useApi, useColors, useConnection, useCoverBuilder, useHomeItemActions } from '@lib/hooks';
 import HomeSectionHeader from '../HomeSectionHeader';
 import React, { useEffect, useState } from 'react';
 import { TMediaLibItem } from '../MediaLibraryList/Item';
@@ -16,6 +16,7 @@ export function RecentlyPlayed() {
     const api = useApi();
     const colors = useColors();
     const { press, longPress } = useHomeItemActions();
+    const { markServerOk, markServerUnreachable, retryToken } = useConnection();
     const [data, setData] = useState<TMediaLibItem[]>([]);
 
     useEffect(() => {
@@ -30,8 +31,12 @@ export function RecentlyPlayed() {
                     }
                 });
 
+                markServerOk();
                 const albums = res.data?.['subsonic-response']?.albumList2?.album as any[];
-                if (!albums) return;
+                if (!albums) {
+                    setData([]);
+                    return;
+                }
 
                 const items = albums.map((album): TMediaLibItem => ({
                     id: album.id,
@@ -44,11 +49,12 @@ export function RecentlyPlayed() {
                 }));
 
                 setData(items);
-            } catch (e) {
-                console.error('Failed to fetch recently played', e);
+            } catch {
+                markServerUnreachable();
+                setData([]);
             }
         })();
-    }, [api, cover.generateUrl]);
+    }, [api, cover.generateUrl, markServerOk, markServerUnreachable, retryToken]);
 
     if (data.length === 0) return null;
 

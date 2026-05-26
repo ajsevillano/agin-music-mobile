@@ -8,7 +8,8 @@ import SearchRightSection from '@lib/components/SearchRightSection';
 import SearchSection from '@lib/components/SearchSection';
 import TagTabs from '@lib/components/TagTabs';
 import { TTagTab } from '@lib/components/TagTabs/TagTab';
-import { useApi, useCoverBuilder, useSearchHistory, useSearchItemActions, useSetting } from '@lib/hooks';
+import { useApi, useConnection, useCoverBuilder, useSearchHistory, useSearchItemActions, useSetting } from '@lib/hooks';
+import ConnectionError from '@lib/components/ConnectionError';
 import { AlbumID3, ArtistID3, Child, SearchResult3 } from '@lib/types';
 import { IconDisc, IconMicrophone2, IconMusic, IconSearch, IconSearchOff } from '@tabler/icons-react-native';
 import { useFocusEffect } from 'expo-router';
@@ -37,6 +38,7 @@ export default function Search() {
     const api = useApi();
     const actions = useSearchItemActions();
     const { t } = useTranslation();
+    const { hasConnectionIssue } = useConnection();
 
     const autoFocus = useSetting('ui.autoFocusSearchBar');
 
@@ -158,7 +160,9 @@ export default function Search() {
                         size='medium'
                         keyboardShouldPersistTaps='handled'
                         rightSection={SearchRightSection}
-                        ListEmptyComponent={<FullscreenMessage animated icon={IconSearchOff} label={t('search.noResults.title', { query })} description={t('search.noResults.description')} />}
+                        ListEmptyComponent={hasConnectionIssue
+                            ? <ConnectionError />
+                            : <FullscreenMessage animated icon={IconSearchOff} label={t('search.noResults.title', { query })} description={t('search.noResults.description')} />}
                     />
                 </Animated.View>}
                 {query.length <= 1 && <Animated.View style={[styles.history, styles.main]} entering={entering} exiting={exiting}>

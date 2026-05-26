@@ -10,16 +10,26 @@ import Animated, {
     withRepeat,
     withTiming,
 } from 'react-native-reanimated';
+import Button from './Button';
 import Title from './Title';
+
+export type FullscreenMessageAction = {
+    label: string;
+    onPress: () => void;
+}
 
 export type FullscreenMessageProps = {
     icon: Icon;
     label: string;
     description?: string;
     animated?: boolean;
+    action?: {
+        primary: FullscreenMessageAction;
+        secondary?: FullscreenMessageAction;
+    };
 }
 
-export default function FullscreenMessage({ icon: Icon, label, description, animated = false }: FullscreenMessageProps) {
+export default function FullscreenMessage({ icon: Icon, label, description, animated = false, action }: FullscreenMessageProps) {
     const colors = useColors();
     const scale = useSharedValue(1);
 
@@ -47,7 +57,13 @@ export default function FullscreenMessage({ icon: Icon, label, description, anim
         icon: {
             marginBottom: 5,
             opacity: 0.5,
-        }
+        },
+        actions: {
+            marginTop: 20,
+            width: '100%',
+            maxWidth: 260,
+            gap: 8,
+        },
     }), []);
 
     return (
@@ -57,6 +73,14 @@ export default function FullscreenMessage({ icon: Icon, label, description, anim
             </Animated.View>
             <Title size={16} align='center'>{label}</Title>
             {description && <Title size={12} align='center' fontFamily='Poppins-Regular' color={colors.text[1]}>{description}</Title>}
+            {action && (
+                <View style={styles.actions}>
+                    <Button variant='primary' onPress={action.primary.onPress}>{action.primary.label}</Button>
+                    {action.secondary && (
+                        <Button variant='subtle' onPress={action.secondary.onPress}>{action.secondary.label}</Button>
+                    )}
+                </View>
+            )}
         </View>
     )
 }
