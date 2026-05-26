@@ -10,6 +10,7 @@ import { IconArrowsShuffle, IconCopy, IconDownload, IconPin, IconPinnedOff, Icon
 import * as Clipboard from 'expo-clipboard';
 import showToast from '@lib/showToast';
 import { ArtistWithAlbumsID3, Child } from '@lib/types';
+import { useTranslation } from 'react-i18next';
 
 function ArtistSheet({ sheetId, payload }: SheetProps<'artist'>) {
     const insets = useSafeAreaInsets();
@@ -19,6 +20,7 @@ function ArtistSheet({ sheetId, payload }: SheetProps<'artist'>) {
     const downloads = useDownloads();
     const pins = usePins();
     const copyIdEnabled = useSetting('developer.copyId');
+    const { t } = useTranslation();
 
     const isPinned = pins.isPinned(payload?.id ?? '');
 
@@ -53,11 +55,11 @@ function ArtistSheet({ sheetId, payload }: SheetProps<'artist'>) {
                 cover={{ uri: cover.generateUrl(payload?.data?.coverArt ?? data?.coverArt ?? '', { size: 128 }) }}
                 coverCacheKey={`${payload?.data?.coverArt ?? data?.coverArt}-128x128`}
                 title={payload?.data?.name ?? data?.name}
-                artist={data ? `${data.albumCount} ${data.albumCount === 1 ? 'album' : 'albums'}` : 'Artist'}
+                artist={data ? t('sheets.artist.subtitleAlbums', { count: data.albumCount ?? 0 }) : t('sheets.artist.subtitleArtist')}
             />
             {payload?.context !== 'artist' && <SheetOption
                 icon={IconPlayerPlay}
-                label='Play All'
+                label={t('sheets.artist.playAll')}
                 onPress={async () => {
                     SheetManager.hide(sheetId);
                     const allSongs = await fetchAllSongs();
@@ -74,7 +76,7 @@ function ArtistSheet({ sheetId, payload }: SheetProps<'artist'>) {
             />}
             {payload?.context !== 'artist' && <SheetOption
                 icon={IconArrowsShuffle}
-                label='Shuffle All'
+                label={t('sheets.artist.shuffleAll')}
                 onPress={async () => {
                     SheetManager.hide(sheetId);
                     const allSongs = await fetchAllSongs();
@@ -92,7 +94,7 @@ function ArtistSheet({ sheetId, payload }: SheetProps<'artist'>) {
             />}
             <SheetOption
                 icon={IconDownload}
-                label='Download All'
+                label={t('sheets.artist.downloadAll')}
                 onPress={async () => {
                     SheetManager.hide(sheetId);
                     const allSongs = await fetchAllSongs();
@@ -102,7 +104,7 @@ function ArtistSheet({ sheetId, payload }: SheetProps<'artist'>) {
             />
             <SheetOption
                 icon={isPinned ? IconPinnedOff : IconPin}
-                label={isPinned ? 'Unpin Artist' : 'Pin Artist'}
+                label={isPinned ? t('sheets.artist.unpin') : t('sheets.artist.pin')}
                 onPress={async () => {
                     if (!payload?.id) return;
                     if (isPinned) await pins.removePin(payload.id);
@@ -118,11 +120,11 @@ function ArtistSheet({ sheetId, payload }: SheetProps<'artist'>) {
             />
             {copyIdEnabled && <SheetOption
                 icon={IconCopy}
-                label='Copy ID'
+                label={t('sheets.artist.copyId')}
                 onPress={async () => {
                     await Clipboard.setStringAsync(payload?.id ?? '');
                     await showToast({
-                        title: 'Copied ID',
+                        title: t('sheets.common.copiedId'),
                         subtitle: payload?.id,
                         icon: IconCopy,
                     });

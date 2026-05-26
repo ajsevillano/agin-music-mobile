@@ -12,6 +12,7 @@ import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
 import showToast from '@lib/showToast';
 import { ScanStatus } from '@lib/types';
+import { useTranslation } from 'react-i18next';
 
 function UserMenuSheet({ sheetId, payload }: SheetProps<'userMenu'>) {
     const insets = useSafeAreaInsets();
@@ -20,6 +21,7 @@ function UserMenuSheet({ sheetId, payload }: SheetProps<'userMenu'>) {
     const memoryCache = useMemoryCache();
     const queue = useQueue();
     const api = useApi();
+    const { t } = useTranslation();
 
     return (
         <StyledActionSheet
@@ -34,7 +36,7 @@ function UserMenuSheet({ sheetId, payload }: SheetProps<'userMenu'>) {
             />
             <SheetOption
                 icon={IconSettings}
-                label='App Settings'
+                label={t('sheets.userMenu.appSettings')}
                 onPress={() => {
                     router.push('/settings');
                     SheetManager.hide(sheetId);
@@ -42,13 +44,13 @@ function UserMenuSheet({ sheetId, payload }: SheetProps<'userMenu'>) {
             />
             <SheetOption
                 icon={IconFileSearch}
-                label='Trigger Scan'
+                label={t('sheets.userMenu.triggerScan')}
                 onPress={async () => {
                     if (!api) return;
                     SheetManager.hide(sheetId);
                     await showToast({
-                        title: 'Scan Triggered',
-                        subtitle: 'The server is now scanning for new music.',
+                        title: t('sheets.userMenu.scanTriggered'),
+                        subtitle: t('sheets.userMenu.scanTriggeredSubtitle'),
                         icon: IconFileSearch,
                         haptics: 'none',
                     });
@@ -56,23 +58,23 @@ function UserMenuSheet({ sheetId, payload }: SheetProps<'userMenu'>) {
                     const status = result.data?.['subsonic-response']?.scanStatus as ScanStatus;
                     if (!status) {
                         return await showToast({
-                            title: 'Scan Failed',
-                            subtitle: 'Ensure that you have the correct permissions.',
+                            title: t('sheets.userMenu.scanFailed'),
+                            subtitle: t('sheets.userMenu.scanFailedSubtitle'),
                             icon: IconExclamationCircle,
                             haptics: 'error',
                         });
                     }
 
                     return await showToast({
-                        title: 'Scan Finished',
-                        subtitle: `Total tracks: ${status.count}`,
+                        title: t('sheets.userMenu.scanFinished'),
+                        subtitle: t('sheets.userMenu.scanFinishedSubtitle', { count: status.count }),
                         icon: IconFileSearch,
                     });
                 }}
             />
             {config.repoUrl && <SheetOption
                 icon={IconBrandGithub}
-                label='Contribute on GitHub'
+                label={t('sheets.userMenu.contribute')}
                 onPress={() => {
                     if (!config.repoUrl) return;
                     Linking.openURL(config.repoUrl);
@@ -81,7 +83,7 @@ function UserMenuSheet({ sheetId, payload }: SheetProps<'userMenu'>) {
             />}
             {config.repoUrl && <SheetOption
                 icon={IconExclamationCircle}
-                label='Report an Issue'
+                label={t('sheets.userMenu.reportIssue')}
                 onPress={() => {
                     if (!config.repoUrl) return;
                     Linking.openURL(`${config.repoUrl}/issues/new`);
@@ -90,15 +92,15 @@ function UserMenuSheet({ sheetId, payload }: SheetProps<'userMenu'>) {
             />}
             <SheetOption
                 icon={IconLogout}
-                label='Log out'
+                label={t('sheets.userMenu.logOut')}
                 onPress={async () => {
                     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
                     const confirmed = await SheetManager.show('confirm', {
                         payload: {
-                            title: 'Log out',
-                            message: 'Are you sure you want to log out?',
-                            cancelText: 'Cancel',
-                            confirmText: 'Log out',
+                            title: t('sheets.userMenu.logOutConfirmTitle'),
+                            message: t('sheets.userMenu.logOutConfirmMessage'),
+                            cancelText: t('common.cancel'),
+                            confirmText: t('sheets.userMenu.logOut'),
                             variant: 'danger',
                         }
                     });

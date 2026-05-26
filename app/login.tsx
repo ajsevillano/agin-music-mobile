@@ -7,24 +7,26 @@ import { router } from 'expo-router';
 import React, { useCallback, useState } from 'react';
 import { View } from 'react-native';
 import { SheetManager } from 'react-native-actions-sheet';
+import { useTranslation } from 'react-i18next';
 
 export default function Login() {
     const [url, setUrl] = useState('');
     const [loading, setLoading] = useState(false);
+    const { t } = useTranslation();
 
     const server = useServer();
 
     const demoConfirm = useCallback(async () => {
         const confirmed = await SheetManager.show('confirm', {
             payload: {
-                title: 'Use Navidrome demo server',
-                message: 'The demo server is provided by Navidrome at https://demo.navidrome.org. Do you want to continue?',
-                confirmText: 'Continue',
-                cancelText: 'Cancel',
+                title: t('login.url.demoConfirmTitle'),
+                message: t('login.url.demoConfirmMessage'),
+                confirmText: t('common.continue'),
+                cancelText: t('common.cancel'),
             }
         });
         return confirmed;
-    }, []);
+    }, [t]);
 
     const goNext = useCallback(async (useDemo?: boolean) => {
         if (url === '' && !useDemo) return;
@@ -38,9 +40,9 @@ export default function Login() {
                 setLoading(false);
                 await SheetManager.show('confirm', {
                     payload: {
-                        title: 'Error',
-                        message: 'Could not connect to server. Please check the URL and try again.',
-                        confirmText: 'OK',
+                        title: t('common.error'),
+                        message: t('login.url.errorMessage'),
+                        confirmText: t('common.ok'),
                         withCancel: false
                     }
                 });
@@ -59,27 +61,27 @@ export default function Login() {
             setLoading(false);
             await SheetManager.show('confirm', {
                 payload: {
-                    title: 'Error',
-                    message: 'Could not connect to server. Please check the URL and try again.',
-                    confirmText: 'OK',
+                    title: t('common.error'),
+                    message: t('login.url.errorMessage'),
+                    confirmText: t('common.ok'),
                     withCancel: false
                 }
             });
         }
-    }, [url]);
+    }, [url, t]);
 
     return (
         <SetupPage
             icon={IconMusic}
-            title='Welcome to Agin Music'
-            description='Agin Music is an open source OpenSubsonic client. Enter your server URL to get started.'
+            title={t('login.url.title')}
+            description={t('login.url.description')}
             actions={<View style={{ gap: 10 }}>
-                <Button onPress={() => goNext(false)} disabled={url === '' || loading}>Next</Button>
-                <Button onPress={() => goNext(true)} variant='subtle'>Use Navidrome demo server</Button>
+                <Button onPress={() => goNext(false)} disabled={url === '' || loading}>{t('common.next')}</Button>
+                <Button onPress={() => goNext(true)} variant='subtle'>{t('login.url.demoButton')}</Button>
             </View>}
         >
             <Input
-                placeholder='Server URL...'
+                placeholder={t('login.url.placeholder')}
                 autoCapitalize='none'
                 autoCorrect={false}
                 autoFocus

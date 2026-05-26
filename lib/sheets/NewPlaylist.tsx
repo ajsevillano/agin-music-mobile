@@ -7,12 +7,14 @@ import { useCallback, useMemo, useState } from 'react';
 import Title from '../components/Title';
 import Button from '../components/Button';
 import { Input } from '../components/Input';
+import { useTranslation } from 'react-i18next';
 
 function NewPlaylsitSheet({ sheetId, payload }: SheetProps<'newPlaylist'>) {
     const insets = useSafeAreaInsets();
     const colors = useColors();
     const cache = useMemoryCache();
     const api = useApi();
+    const { t } = useTranslation();
 
     const [name, setName] = useState<string>(payload?.initialName ?? '');
     const [loading, setLoading] = useState<boolean>(false);
@@ -60,15 +62,15 @@ function NewPlaylsitSheet({ sheetId, payload }: SheetProps<'newPlaylist'>) {
             isModal={Platform.OS == 'android' ? false : true}
         >
             <View style={styles.container}>
-                <Title size={20} align="center" fontFamily="Poppins-Bold">{isEdit ? 'Rename Playlist' : 'Create Playlist'}</Title>
+                <Title size={20} align="center" fontFamily="Poppins-Bold">{isEdit ? t('sheets.newPlaylist.rename') : t('sheets.newPlaylist.create')}</Title>
                 <View style={styles.subtitle}>
-                    <Title size={14} align="center" fontFamily="Poppins-Regular" color={colors.text[1]}>Choose a name for your playlist</Title>
+                    <Title size={14} align="center" fontFamily="Poppins-Regular" color={colors.text[1]}>{t('sheets.newPlaylist.description')}</Title>
                 </View>
-                <Input placeholder='Choose a name...' value={name} onChangeText={setName} autoFocus />
+                <Input placeholder={t('sheets.newPlaylist.placeholder')} value={name} onChangeText={setName} autoFocus />
                 <View style={styles.button}>
-                    <Button variant='primary' onPress={save} disabled={name.length == 0 || loading}>{isEdit ? 'Save' : 'Create'}</Button>
+                    <Button variant='primary' onPress={save} disabled={name.length == 0 || loading}>{isEdit ? t('sheets.newPlaylist.saveButton') : t('sheets.newPlaylist.createButton')}</Button>
                 </View>
-                <Button variant='subtle' onPress={() => SheetManager.hide(sheetId, { payload: { created: false } })}>Cancel</Button>
+                <Button variant='subtle' onPress={() => SheetManager.hide(sheetId, { payload: { created: false } })}>{t('common.cancel')}</Button>
             </View>
         </StyledActionSheet>
     );

@@ -8,6 +8,7 @@ import { router } from 'expo-router';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { Switch, TextInput, TouchableHighlight, View } from 'react-native';
 import { SheetManager } from 'react-native-actions-sheet';
+import { useTranslation } from 'react-i18next';
 
 export default function Login() {
     const [username, setUsername] = useState('');
@@ -15,6 +16,7 @@ export default function Login() {
     const [useLegacyAuth, setUseLegacyAuth] = useState(false);
     const [loading, setLoading] = useState(false);
     const colors = useColors();
+    const { t } = useTranslation();
 
     const server = useServer();
 
@@ -30,9 +32,9 @@ export default function Login() {
             setLoading(false);
             await SheetManager.show('confirm', {
                 payload: {
-                    title: 'Error',
-                    message: 'Username or password is incorrect. Please try again.',
-                    confirmText: 'OK',
+                    title: t('common.error'),
+                    message: t('login.password.errorMessage'),
+                    confirmText: t('common.ok'),
                     withCancel: false
                 }
             });
@@ -41,7 +43,7 @@ export default function Login() {
 
         setLoading(false);
         router.replace('/');
-    }, [username, password, server.saveAndTestPasswordCredentials, useLegacyAuth]);
+    }, [username, password, server.saveAndTestPasswordCredentials, useLegacyAuth, t]);
 
     const styles = useMemo(() => ({
         container: {
@@ -52,14 +54,14 @@ export default function Login() {
     return (
         <SetupPage
             icon={IconKey}
-            title='Enter username and password'
-            description='Enter your username and password to get started.'
-            actions={<Button disabled={username === '' || password === '' || loading} onPress={logIn}>Done</Button>}
+            title={t('login.password.title')}
+            description={t('login.password.description')}
+            actions={<Button disabled={username === '' || password === '' || loading} onPress={logIn}>{t('common.done')}</Button>}
         >
             <View style={styles.container}>
                 <Input
                     icon={IconUser}
-                    placeholder='Username...'
+                    placeholder={t('login.password.usernamePlaceholder')}
                     autoCapitalize='none'
                     autoCorrect={false}
                     autoFocus
@@ -74,7 +76,7 @@ export default function Login() {
                 />
                 <Input
                     icon={IconKey}
-                    placeholder='Password...'
+                    placeholder={t('login.password.passwordPlaceholder')}
                     secureTextEntry
                     autoCapitalize='none'
                     autoCorrect={false}
@@ -100,8 +102,8 @@ export default function Login() {
                         paddingVertical: 10,
                     }}>
                         <View style={{ flex: 1, marginRight: 10 }}>
-                            <Title size={14}>Legacy Authentication</Title>
-                            <Title size={12} color={colors.text[1]} fontFamily="Poppins-Regular">Use plain password for Nextcloud Music</Title>
+                            <Title size={14}>{t('login.password.legacyTitle')}</Title>
+                            <Title size={12} color={colors.text[1]} fontFamily="Poppins-Regular">{t('login.password.legacyDescription')}</Title>
                         </View>
                         <Switch
                             trackColor={{ false: colors.segmentedControlBackground, true: colors.forcedTint }}

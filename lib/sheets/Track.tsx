@@ -12,6 +12,7 @@ import * as Clipboard from 'expo-clipboard';
 import showToast from '@lib/showToast';
 import { router } from 'expo-router';
 import * as Haptics from 'expo-haptics';
+import { useTranslation } from 'react-i18next';
 
 function TrackSheet({ sheetId, payload }: SheetProps<'track'>) {
     const insets = useSafeAreaInsets();
@@ -19,6 +20,7 @@ function TrackSheet({ sheetId, payload }: SheetProps<'track'>) {
     const cover = useCoverBuilder();
     const queue = useQueue();
     const helpers = useApiHelpers();
+    const { t } = useTranslation();
 
     const copyIdEnabled = useSetting('developer.copyId');
 
@@ -52,11 +54,11 @@ function TrackSheet({ sheetId, payload }: SheetProps<'track'>) {
             />
             {payload?.context != 'nowPlaying' && <SheetOption
                 icon={IconPlayerTrackNext}
-                label='Play Next'
+                label={t('sheets.track.playNext')}
                 onPress={async () => {
                     await queue.playNext(data?.id ?? '');
                     await showToast({
-                        title: 'Playing Next',
+                        title: t('sheets.track.playingNext'),
                         subtitle: data?.title,
                         cover: { uri: cover.generateUrl(data?.coverArt ?? '', { size: 128 }), cacheKey: `${data?.coverArt}-128x128` },
                     });
@@ -65,11 +67,11 @@ function TrackSheet({ sheetId, payload }: SheetProps<'track'>) {
             />}
             {payload?.context != 'nowPlaying' && <SheetOption
                 icon={IconPlaylistAdd}
-                label='Add to Queue'
+                label={t('sheets.track.addToQueue')}
                 onPress={async () => {
                     await queue.add(data?.id ?? '');
                     await showToast({
-                        title: 'Added to Queue',
+                        title: t('sheets.track.addedToQueue'),
                         subtitle: data?.title,
                         cover: { uri: cover.generateUrl(data?.coverArt ?? '', { size: 128 }), cacheKey: `${data?.coverArt}-128x128` },
                     });
@@ -78,7 +80,7 @@ function TrackSheet({ sheetId, payload }: SheetProps<'track'>) {
             />}
             <SheetOption
                 icon={IconMicrophone2}
-                label='Go to Artist'
+                label={t('sheets.track.goToArtist')}
                 onPress={() => {
                     if (data?.artistId) {
                         router.push({ pathname: '/artists/[id]', params: { id: data.artistId } });
@@ -88,7 +90,7 @@ function TrackSheet({ sheetId, payload }: SheetProps<'track'>) {
             />
             {payload?.context != 'album' && <SheetOption
                 icon={IconDisc}
-                label='Go to Album'
+                label={t('sheets.track.goToAlbum')}
                 onPress={() => {
                     router.push({ pathname: '/albums/[id]', params: { id: data?.albumId ?? '' } });
                     SheetManager.hide(sheetId, { payload: { shouldCloseSheet: true } });
@@ -96,7 +98,7 @@ function TrackSheet({ sheetId, payload }: SheetProps<'track'>) {
             />}
             {payload?.context != 'nowPlaying' && (isDownloaded ? <SheetOption
                 icon={IconTrash}
-                label='Remove Download'
+                label={t('sheets.track.removeDownload')}
                 variant='destructive'
                 onPress={async () => {
                     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
@@ -105,7 +107,7 @@ function TrackSheet({ sheetId, payload }: SheetProps<'track'>) {
                 }}
             /> : <SheetOption
                 icon={IconDownload}
-                label='Download'
+                label={t('sheets.track.download')}
                 onPress={async () => {
                     if (!data) return;
                     SheetManager.hide(sheetId);
@@ -114,7 +116,7 @@ function TrackSheet({ sheetId, payload }: SheetProps<'track'>) {
             />)}
             <SheetOption
                 icon={isPinned ? IconPinnedOff : IconPin}
-                label={isPinned ? 'Unpin Track' : 'Pin Track'}
+                label={isPinned ? t('sheets.track.unpin') : t('sheets.track.pin')}
                 onPress={async () => {
                     if (!payload?.id) return;
                     if (isPinned) await pins.removePin(payload?.id);
@@ -130,11 +132,11 @@ function TrackSheet({ sheetId, payload }: SheetProps<'track'>) {
             />
             {copyIdEnabled && <SheetOption
                 icon={IconCopy}
-                label='Copy ID'
+                label={t('sheets.track.copyId')}
                 onPress={async () => {
                     await Clipboard.setStringAsync(payload?.id ?? '');
                     await showToast({
-                        title: 'Copied ID',
+                        title: t('sheets.common.copiedId'),
                         subtitle: payload?.id,
                         icon: IconCopy,
                     });
@@ -143,7 +145,7 @@ function TrackSheet({ sheetId, payload }: SheetProps<'track'>) {
             />}
             <SheetOption
                 icon={IconCirclePlus}
-                label='Add to a Playlist'
+                label={t('sheets.track.addToPlaylist')}
                 onPress={async () => {
                     if (!payload?.id) return;
                     const { added } = await SheetManager.show('addToPlaylist', {
@@ -157,7 +159,7 @@ function TrackSheet({ sheetId, payload }: SheetProps<'track'>) {
             />
             {payload?.context == 'playlist' && <SheetOption
                 icon={IconCircleMinus}
-                label='Remove from this Playlist'
+                label={t('sheets.track.removeFromPlaylist')}
                 variant='destructive'
                 onPress={async () => {
                     if (!payload.contextId || !payload.id) return;
@@ -166,7 +168,7 @@ function TrackSheet({ sheetId, payload }: SheetProps<'track'>) {
                     SheetManager.hide(sheetId);
 
                     await showToast({
-                        title: 'Removed from Playlist',
+                        title: t('sheets.track.removedFromPlaylist'),
                         subtitle: data?.title,
                         cover: { uri: cover.generateUrl(data?.coverArt ?? '', { size: 128 }), cacheKey: `${data?.coverArt}-128x128` },
                     });

@@ -8,6 +8,7 @@ import { useColors, useServer } from '@lib/hooks';
 import { Redirect, router } from 'expo-router';
 import { View } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useTranslation } from 'react-i18next';
 
 const tabRoutes: Record<string, string> = {
   home: '/',
@@ -20,6 +21,7 @@ export default function TabLayout() {
   const colors = useColors();
   const { server, isLoading } = useServer();
   const hasNavigated = useRef(false);
+  const { t } = useTranslation();
 
   useEffect(() => {
     if (isLoading || hasNavigated.current) return;
@@ -57,25 +59,25 @@ export default function TabLayout() {
             <TabTrigger name="home" href="/" style={{ flex: 1 }} asChild>
               <TabButton
                 icon={IconHome}
-                label='Home'
+                label={t('tabs.home')}
               />
             </TabTrigger>
             <TabTrigger name="library" href="/library" style={{ flex: 1 }} asChild>
               <TabButton
                 icon={IconLayoutGrid}
-                label='Library'
+                label={t('tabs.library')}
               />
             </TabTrigger>
             <TabTrigger name="downloads" href="/downloads" style={{ flex: 1 }} asChild>
               <TabButton
                 icon={IconCircleArrowDown}
-                label='Downloads'
+                label={t('tabs.downloads')}
               />
             </TabTrigger>
             <TabTrigger name="search" href="/search" style={{ flex: 1 }} asChild>
               <TabButton
                 icon={IconSearch}
-                label='Search'
+                label={t('tabs.search')}
               />
             </TabTrigger>
           </TabBar>

@@ -15,6 +15,7 @@ import { useFocusEffect } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { KeyboardAvoidingView, StyleSheet, TextInput, View } from 'react-native';
 import Animated, { Easing, FadeIn, FadeOut } from 'react-native-reanimated';
+import { useTranslation } from 'react-i18next';
 
 type Offsets = {
     album: number;
@@ -27,29 +28,6 @@ export interface MappedResult extends TMediaLibItem {
     fullData: Child | AlbumID3 | ArtistID3;
 };
 
-const tabs: TTagTab[] = [
-    {
-        label: 'All',
-        id: 'all',
-        icon: IconSearch,
-    },
-    {
-        label: 'Artists',
-        id: 'artist',
-        icon: IconMicrophone2,
-    },
-    {
-        label: 'Albums',
-        id: 'album',
-        icon: IconDisc,
-    },
-    {
-        label: 'Songs',
-        id: 'track',
-        icon: IconMusic,
-    }
-];
-
 const entering = FadeIn.duration(100).easing(Easing.inOut(Easing.ease));
 const exiting = FadeOut.duration(100).easing(Easing.inOut(Easing.ease));
 
@@ -58,8 +36,16 @@ export default function Search() {
     const cover = useCoverBuilder();
     const api = useApi();
     const actions = useSearchItemActions();
+    const { t } = useTranslation();
 
     const autoFocus = useSetting('ui.autoFocusSearchBar');
+
+    const tabs = useMemo<TTagTab[]>(() => [
+        { label: t('search.tabs.all'), id: 'all', icon: IconSearch },
+        { label: t('search.tabs.artists'), id: 'artist', icon: IconMicrophone2 },
+        { label: t('search.tabs.albums'), id: 'album', icon: IconDisc },
+        { label: t('search.tabs.songs'), id: 'track', icon: IconMusic },
+    ], [t]);
 
     const [tab, setTab] = useState<string>('all');
     const [query, setQuery] = useState<string>('');
@@ -96,7 +82,7 @@ export default function Search() {
                 id: item.id,
                 type: 'album',
                 title: item.name,
-                subtitle: `Album • ${item.artist} • ${item.year}`,
+                subtitle: t('search.labels.albumDetail', { artist: item.artist, year: item.year }),
                 coverUri: cover.generateUrl(item.coverArt ?? '', { size: 128 }),
                 coverCacheKey: `${item.coverArt}-128x128`,
                 fullData: item,
@@ -107,7 +93,7 @@ export default function Search() {
                 id: item.id,
                 type: 'artist',
                 title: item.name,
-                subtitle: 'Artist',
+                subtitle: t('search.labels.artist'),
                 coverUri: cover.generateUrl(item.coverArt ?? '', { size: 128 }),
                 coverCacheKey: `${item.coverArt}-128x128`,
                 fullData: item,
@@ -118,7 +104,7 @@ export default function Search() {
                 id: item.id,
                 type: 'track',
                 title: item.title,
-                subtitle: `Song • ${item.artist}`,
+                subtitle: t('search.labels.songDetail', { artist: item.artist }),
                 coverUri: cover.generateUrl(item.coverArt ?? '', { size: 128 }),
                 coverCacheKey: `${item.coverArt}-128x128`,
                 fullData: item,
@@ -161,7 +147,7 @@ export default function Search() {
         <Container>
             <KeyboardAvoidingView behavior='padding' style={styles.main}>
                 <Header withAvatar={false}>
-                    <Input compact icon={IconSearch} placeholder='Search songs, artists, albums...' autoFocus={!!autoFocus} ref={inputRef} clearButtonMode='always' value={query} onChangeText={setQuery} />
+                    <Input compact icon={IconSearch} placeholder={t('search.placeholder')} autoFocus={!!autoFocus} ref={inputRef} clearButtonMode='always' value={query} onChangeText={setQuery} />
                 </Header>
                 {/* Had to do this beacuse Navidrome returns empty response for one character queries */}
                 {query.length > 1 && <Animated.View style={styles.main} entering={entering} exiting={exiting}>
@@ -169,8 +155,8 @@ export default function Search() {
                     <MediaLibraryList data={filteredResults} onItemPress={(item) => actions.press(item, { trackContext: tracksInResults })} size='medium' keyboardShouldPersistTaps='handled' rightSection={SearchRightSection} />
                 </Animated.View>}
                 {query.length <= 1 && <Animated.View style={[styles.history, styles.main]} entering={entering} exiting={exiting}>
-                    {mappedHistory.length !== 0 && <SearchSection label='Recently Searched' action={{ label: 'Clear', onPress: async () => await history.clearAll() }} />}
-                    {mappedHistory.length === 0 && <FullscreenMessage icon={IconSearch} label="Search" description="Search for songs, artists, albums..." />}
+                    {mappedHistory.length !== 0 && <SearchSection label={t('search.recentSearches')} action={{ label: t('search.clear'), onPress: async () => await history.clearAll() }} />}
+                    {mappedHistory.length === 0 && <FullscreenMessage icon={IconSearch} label={t('search.emptyLabel')} description={t('search.emptyDescription')} />}
                     {mappedHistory.length !== 0 && <MediaLibraryList data={mappedHistory} onItemPress={(item) => actions.press(item, { addToHistory: false })} size='medium' withTopMargin={false} keyboardShouldPersistTaps='handled' rightSection={SearchRightSection} />}
                 </Animated.View>}
             </KeyboardAvoidingView>
