@@ -24,6 +24,18 @@
     "downloads": "Downloads",
     "search": "Search"
   },
+  "connection": {
+    "retry": "Retry",
+    "viewDownloads": "View my downloads",
+    "offline": {
+      "title": "No Internet connection",
+      "description": "Check your Wi-Fi or mobile data and try again."
+    },
+    "serverUnreachable": {
+      "title": "Can't reach the server",
+      "description": "Your Navidrome server isn't responding. Check the URL, your VPN, or whether you're on the same network."
+    }
+  },
   "home": {
     "title": "Home",
     "pinned": "Pinned",
