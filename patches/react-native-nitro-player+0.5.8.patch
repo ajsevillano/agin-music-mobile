@@ -11,10 +11,17 @@ diff --git a/node_modules/react-native-nitro-player/android/src/main/AndroidMani
      <application>
          <!-- WorkManager's SystemForegroundService for download notifications -->
 diff --git a/node_modules/react-native-nitro-player/android/src/main/java/com/margelo/nitro/nitroplayer/core/TrackPlayerCore.kt b/node_modules/react-native-nitro-player/android/src/main/java/com/margelo/nitro/nitroplayer/core/TrackPlayerCore.kt
-index 6132a34..1a650d5 100644
 --- a/node_modules/react-native-nitro-player/android/src/main/java/com/margelo/nitro/nitroplayer/core/TrackPlayerCore.kt
 +++ b/node_modules/react-native-nitro-player/android/src/main/java/com/margelo/nitro/nitroplayer/core/TrackPlayerCore.kt
-@@ -149,6 +149,7 @@ class TrackPlayerCore private constructor(
+@@ -8,6 +8,7 @@
+ import androidx.media3.common.C
+ import androidx.media3.common.MediaItem
+ import androidx.media3.common.MediaMetadata
++import androidx.media3.common.PlaybackException
+ import androidx.media3.common.Player
+ import androidx.media3.exoplayer.DefaultLoadControl
+ import androidx.media3.exoplayer.ExoPlayer
+@@ -149,6 +150,7 @@
                          .setAudioAttributes(audioAttributes, true) // handleAudioFocus = true for gapless
                          .setHandleAudioBecomingNoisy(true) // Pause when headphones disconnected
                          .setPauseAtEndOfMediaItems(false) // Don't pause between items - key for gapless!
@@ -22,10 +29,37 @@ index 6132a34..1a650d5 100644
                          .build()
  
                  mediaSessionManager =
-@@ -443,6 +443,29 @@ class TrackPlayerCore private constructor(
-         }
-     }
+@@ -353,6 +355,24 @@
+                                 }
+                             }
+                         }
++
++                        override fun onPlayerError(error: PlaybackException) {
++                            // Without this, a stream error (network restricted on screen-off,
++                            // socket reset, etc.) silently drops ExoPlayer to STATE_IDLE but
++                            // the MediaSession keeps reporting STATE_PLAYING with the last
++                            // position and speed=1.0 — so the lock-screen widget's progress
++                            // bar keeps advancing while no audio plays. Forcing pause() makes
++                            // the PlaybackState reflect reality and updates the notification
++                            // icon accordingly.
++                            NitroPlayerLogger.log("TrackPlayerCore", "❌ Player error: code=${error.errorCode} (${error.errorCodeName}) — ${error.message}")
++                            handler.post {
++                                try {
++                                    player.pause()
++                                } catch (_: Exception) {
++                                    // best-effort
++                                }
++                            }
++                        }
+                     },
+                 )
  
+@@ -441,6 +461,29 @@
+                 }
+             }
+         }
++    }
++
 +    /**
 +     * Reorder a track in the player queue without interrupting playback
 +     */
@@ -47,11 +81,9 @@ index 6132a34..1a650d5 100644
 +                }
 +            }
 +        }
-+    }
-+
+     }
+ 
      /**
-      * Get current playlist ID
-      */
 diff --git a/node_modules/react-native-nitro-player/android/src/main/java/com/margelo/nitro/nitroplayer/download/DownloadWorker.kt b/node_modules/react-native-nitro-player/android/src/main/java/com/margelo/nitro/nitroplayer/download/DownloadWorker.kt
 index 1ba2da2..3735b11 100644
 --- a/node_modules/react-native-nitro-player/android/src/main/java/com/margelo/nitro/nitroplayer/download/DownloadWorker.kt
@@ -105,6 +137,199 @@ index ebc150e..7598a1d 100644
          }
  
          return true
+diff --git a/node_modules/react-native-nitro-player/android/src/main/java/com/margelo/nitro/nitroplayer/media/MediaBrowserService.kt b/node_modules/react-native-nitro-player/android/src/main/java/com/margelo/nitro/nitroplayer/media/MediaBrowserService.kt
+--- a/node_modules/react-native-nitro-player/android/src/main/java/com/margelo/nitro/nitroplayer/media/MediaBrowserService.kt
++++ b/node_modules/react-native-nitro-player/android/src/main/java/com/margelo/nitro/nitroplayer/media/MediaBrowserService.kt
+@@ -2,11 +2,16 @@
+ 
+ package com.margelo.nitro.nitroplayer.media
+ 
++import android.app.Notification
+ import android.content.Context
++import android.content.Intent
++import android.content.pm.ServiceInfo
+ import android.net.Uri
++import android.os.Build
+ import android.os.Bundle
+ import android.support.v4.media.MediaBrowserCompat
+ import android.support.v4.media.MediaDescriptionCompat
++import androidx.core.app.ServiceCompat
+ import androidx.media.MediaBrowserServiceCompat
+ import androidx.media.utils.MediaConstants
+ import com.margelo.nitro.nitroplayer.TrackItem
+@@ -25,6 +30,12 @@
+         private const val EMPTY_ROOT_ID = "empty_root"
+         private const val PLAYLIST_PREFIX = "playlist_"
+ 
++        // Must match MediaSessionManager.NOTIFICATION_ID — Android won't promote a service
++        // to foreground using a notification that doesn't match an ID it knows about.
++        const val NOTIFICATION_ID = 1001
++        const val ACTION_START_FOREGROUND = "com.margelo.nitro.nitroplayer.START_FOREGROUND"
++        const val ACTION_STOP_FOREGROUND = "com.margelo.nitro.nitroplayer.STOP_FOREGROUND"
++
+         var trackPlayerCore: TrackPlayerCore? = null
+         var mediaSessionManager: MediaSessionManager? = null
+         var isAndroidAutoEnabled: Boolean = false
+@@ -36,6 +47,9 @@
+         fun getInstance(): NitroPlayerMediaBrowserService? = instance
+     }
+ 
++    @Volatile
++    private var isInForeground = false
++
+     private val serviceScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
+     private lateinit var mediaLibraryManager: MediaLibraryManager
+ 
+@@ -66,13 +80,75 @@
+         NitroPlayerLogger.log("MediaBrowserService", "🚀 NitroPlayerMediaBrowserService: Service created")
+     }
+ 
++    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
++        when (intent?.action) {
++            ACTION_START_FOREGROUND -> {
++                // Asked to promote the service to foreground. The MediaSessionManager already
++                // posted the notification with notificationManager.notify(), but Android 12+ also
++                // requires startForeground() to be called within 5s of startForegroundService()
++                // or it throws a ForegroundServiceDidNotStartInTimeException. We rebuild the
++                // notification here as a safety net in case getInstance() was null when the
++                // caller tried to promote directly.
++                val notification = mediaSessionManager?.buildCurrentNotification()
++                if (notification != null) {
++                    promoteToForeground(notification)
++                }
++            }
++            ACTION_STOP_FOREGROUND -> {
++                demoteFromForeground(removeNotification = false)
++            }
++        }
++        return super.onStartCommand(intent, flags, startId)
++    }
++
+     override fun onDestroy() {
+         super.onDestroy()
+         instance = null
++        isInForeground = false
+         serviceScope.cancel()
+         NitroPlayerLogger.log("MediaBrowserService", "🛑 NitroPlayerMediaBrowserService: Service destroyed")
+     }
+ 
++    /**
++     * Promote this service to a foreground service of type MEDIA_PLAYBACK. Without this,
++     * Android 14+ treats the audio process as a background activity and may restrict its
++     * network/CPU at any moment after the screen turns off, which causes random playback cuts.
++     */
++    fun promoteToForeground(notification: Notification) {
++        try {
++            val type =
++                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
++                    ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK
++                } else {
++                    0
++                }
++            ServiceCompat.startForeground(this, NOTIFICATION_ID, notification, type)
++            if (!isInForeground) {
++                isInForeground = true
++                NitroPlayerLogger.log("MediaBrowserService", "🚀 Service promoted to foreground (type=mediaPlayback)")
++            }
++        } catch (e: Exception) {
++            NitroPlayerLogger.log("MediaBrowserService", "❌ Failed to promote service to foreground: ${e.message}")
++        }
++    }
++
++    /**
++     * Demote from foreground while keeping the notification visible (STOP_FOREGROUND_DETACH),
++     * so the lock-screen control survives a pause without the process retaining foreground
++     * privileges (and thus battery cost) it no longer needs.
++     */
++    fun demoteFromForeground(removeNotification: Boolean) {
++        if (!isInForeground) return
++        try {
++            val flag = if (removeNotification) ServiceCompat.STOP_FOREGROUND_REMOVE else ServiceCompat.STOP_FOREGROUND_DETACH
++            ServiceCompat.stopForeground(this, flag)
++            isInForeground = false
++            NitroPlayerLogger.log("MediaBrowserService", "🛑 Service demoted from foreground")
++        } catch (e: Exception) {
++            NitroPlayerLogger.log("MediaBrowserService", "❌ Failed to demote service: ${e.message}")
++        }
++    }
++
+     override fun onGetRoot(
+         clientPackageName: String,
+         clientUid: Int,
+diff --git a/node_modules/react-native-nitro-player/android/src/main/java/com/margelo/nitro/nitroplayer/media/MediaSessionManager.kt b/node_modules/react-native-nitro-player/android/src/main/java/com/margelo/nitro/nitroplayer/media/MediaSessionManager.kt
+--- a/node_modules/react-native-nitro-player/android/src/main/java/com/margelo/nitro/nitroplayer/media/MediaSessionManager.kt
++++ b/node_modules/react-native-nitro-player/android/src/main/java/com/margelo/nitro/nitroplayer/media/MediaSessionManager.kt
+@@ -12,6 +12,7 @@
+ import android.os.Build
+ import android.util.Log
+ import androidx.core.app.NotificationCompat
++import androidx.core.content.ContextCompat
+ import androidx.media3.common.MediaItem
+ import androidx.media3.common.MediaMetadata
+ import androidx.media3.common.Player
+@@ -354,6 +355,38 @@
+         val currentTrack = getCurrentTrack()
+         val notification = buildNotification(currentTrack)
+         notificationManager?.notify(NOTIFICATION_ID, notification)
++        syncForegroundState(notification)
++    }
++
++    /**
++     * Allow NitroPlayerMediaBrowserService to (re)build the current notification when it needs
++     * to call startForeground() within Android's 5s ANR window after startForegroundService().
++     */
++    internal fun buildCurrentNotification(): Notification = buildNotification(getCurrentTrack())
++
++    /**
++     * Keep the NitroPlayerMediaBrowserService's foreground state in sync with the player.
++     * Promote while playing so Android can't restrict the process on screen-off; demote on
++     * pause so we don't hold foreground privileges (and the associated battery cost) we don't
++     * need. The notification stays visible across the transition via STOP_FOREGROUND_DETACH.
++     */
++    private fun syncForegroundState(notification: Notification) {
++        try {
++            if (player.isPlaying) {
++                val intent =
++                    Intent(context, NitroPlayerMediaBrowserService::class.java).apply {
++                        action = NitroPlayerMediaBrowserService.ACTION_START_FOREGROUND
++                    }
++                ContextCompat.startForegroundService(context, intent)
++                // If the service is already created we can promote immediately, which avoids
++                // any window where Android could throw ForegroundServiceDidNotStartInTime.
++                NitroPlayerMediaBrowserService.getInstance()?.promoteToForeground(notification)
++            } else {
++                NitroPlayerMediaBrowserService.getInstance()?.demoteFromForeground(removeNotification = false)
++            }
++        } catch (e: Exception) {
++            NitroPlayerLogger.log("MediaSessionManager", "⚠️ Failed to sync foreground state: ${e.message}")
++        }
+     }
+ 
+     private fun buildNotification(track: TrackItem?): Notification {
+@@ -428,7 +461,14 @@
+                 val bitmap = loadArtworkBitmap(artworkUrl)
+                 if (bitmap != null) {
+                     builder.setLargeIcon(bitmap)
+-                    notificationManager?.notify(NOTIFICATION_ID, builder.build())
++                    val updated = builder.build()
++                    notificationManager?.notify(NOTIFICATION_ID, updated)
++                    // Keep the foreground notification in sync with the artwork-loaded version,
++                    // otherwise the lock-screen control reverts to the placeholder icon on
++                    // resume from screen-off.
++                    if (player.isPlaying) {
++                        NitroPlayerMediaBrowserService.getInstance()?.promoteToForeground(updated)
++                    }
+                 }
+             }
+         }
+@@ -457,6 +497,7 @@
+     }
+ 
+     private fun hideNotification() {
++        NitroPlayerMediaBrowserService.getInstance()?.demoteFromForeground(removeNotification = true)
+         notificationManager?.cancel(NOTIFICATION_ID)
+     }
+ 
 diff --git a/node_modules/react-native-nitro-player/ios/core/TrackPlayerCore.swift b/node_modules/react-native-nitro-player/ios/core/TrackPlayerCore.swift
 index de18c45..0911a56 100644
 --- a/node_modules/react-native-nitro-player/ios/core/TrackPlayerCore.swift
