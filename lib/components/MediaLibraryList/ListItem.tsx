@@ -1,13 +1,14 @@
-import { StyleSheet, View, ViewProps } from 'react-native';
-import { MediaLibItemProps, TMediaLibItem } from './Item';
+import { StyleSheet, View } from 'react-native';
+import { MediaLibItemProps } from './Item';
 import { useColors } from '@lib/hooks';
 import { useContext, useMemo } from 'react';
 import Title from '../Title';
 import Cover from '../Cover';
 import { LibSize, LibSeparators } from '.';
 import { IconChevronRight } from '@tabler/icons-react-native';
+import EqualizerBars from '../EqualizerBars';
 
-export default function ListItem({ title, subtitle, coverUri, coverCacheKey, rightSection, isAlbumEntry, trackNumber, type, icon }: MediaLibItemProps) {
+export default function ListItem({ title, subtitle, coverUri, coverCacheKey, rightSection, isAlbumEntry, trackNumber, type, icon, isActive, isPlaying }: MediaLibItemProps) {
     const size = useContext(LibSize);
     const withSeparators = useContext(LibSeparators);
 
@@ -18,7 +19,7 @@ export default function ListItem({ title, subtitle, coverUri, coverCacheKey, rig
             justifyContent: 'space-between',
             alignItems: 'center',
             paddingVertical: withSeparators ? 10 : size == 'small' ? 8 : 6,
-            paddingHorizontal: 20,
+            paddingHorizontal: isActive ? 8 : 20,
             overflow: 'hidden',
             gap: 10,
         },
@@ -47,15 +48,32 @@ export default function ListItem({ title, subtitle, coverUri, coverCacheKey, rig
             justifyContent: 'center',
             alignItems: 'flex-end',
             paddingRight: 10,
-        }
-    }), [colors, size, withSeparators]);
+        },
+        albumNumberBars: {
+            width: 35,
+            height: 35,
+            justifyContent: 'center',
+            alignItems: 'center',
+            paddingRight: 10,
+        },
+    }), [colors, size, withSeparators, isActive]);
+
+    const titleColor = isActive ? colors.forcedTint : colors.text[0];
 
     return (
-        <View style={[styles.item, withSeparators && styles.separator]}>
+        <View style={[styles.item, withSeparators && !isActive && styles.separator]}>
             <View style={styles.itemLeft}>
-                {isAlbumEntry ? <View style={styles.albumNumberContainer}>
-                    <Title size={18} color={colors.text[1]}>{trackNumber}</Title>
-                </View> : <Cover
+                {isAlbumEntry ? (
+                    isActive ? (
+                        <View style={styles.albumNumberBars}>
+                            <EqualizerBars color={colors.forcedTint} isPlaying={isPlaying} size={18} />
+                        </View>
+                    ) : (
+                        <View style={styles.albumNumberContainer}>
+                            <Title size={18} color={colors.text[1]}>{trackNumber}</Title>
+                        </View>
+                    )
+                ) : <Cover
                     source={{ uri: coverUri }}
                     cacheKey={coverCacheKey}
                     size={size == 'small' ? 40 : size == 'medium' ? 50 : 60}
@@ -64,13 +82,15 @@ export default function ListItem({ title, subtitle, coverUri, coverCacheKey, rig
                     icon={icon}
                 />}
                 <View style={styles.metadata}>
-                    <Title size={(size == 'small' || size == 'medium') ? 14 : 16} numberOfLines={1}>{title}</Title>
+                    <Title size={(size == 'small' || size == 'medium') ? 14 : 16} color={titleColor} numberOfLines={1}>{title}</Title>
                     {subtitle && <Title size={12} color={colors.text[1]} fontFamily='Poppins-Regular' numberOfLines={1}>{subtitle}</Title>}
                 </View>
             </View>
             {rightSection ? <View style={styles.right}>
                 {rightSection}
-            </View> : (
+            </View> : isActive && !isAlbumEntry ? (
+                <EqualizerBars color={colors.forcedTint} isPlaying={isPlaying} size={18} />
+            ) : (
                 size == 'large' && <IconChevronRight size={16} color={colors.text[1]} />
             )}
         </View>
