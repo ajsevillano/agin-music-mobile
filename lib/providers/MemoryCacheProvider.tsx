@@ -138,10 +138,26 @@ export default function MemoryCacheProvider({ children }: { children?: React.Rea
         if (!api) return;
 
         try {
-            const songsRes = await api.get('/getRandomSongs', { params: { size: 500 } });
-            const songs = songsRes.data?.['subsonic-response']?.randomSongs?.song as Child[];
+            // Subsonic has no "get all songs" endpoint. /getRandomSongs returns a
+            // random, capped subset, so songs would randomly go missing from the list.
+            // search3 with an empty query returns the full library, paginated via songOffset.
+            const pageSize = 500;
+            const songs: Child[] = [];
+            let songOffset = 0;
+
+            while (true) {
+                const songsRes = await api.get('/search3', {
+                    params: { query: '', artistCount: 0, albumCount: 0, songCount: pageSize, songOffset },
+                });
+                const page = songsRes.data?.['subsonic-response']?.searchResult3?.song as Child[] | undefined;
+                if (!page || page.length === 0) break;
+
+                songs.push(...page);
+                if (page.length < pageSize) break;
+                songOffset += pageSize;
+            }
+
             markServerOk();
-            if (!songs) return;
 
             const sorted = [...songs].sort((a, b) =>
                 (a.title ?? '').localeCompare(b.title ?? '', undefined, { sensitivity: 'base' })
