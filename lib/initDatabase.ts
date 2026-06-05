@@ -10,6 +10,14 @@ export default async function initDatabase(db: SQLiteDatabase) {
         primary key (id)
     )`);
 
+    await db.execAsync(`CREATE TABLE IF NOT EXISTS libraryCache (
+        key TEXT not null,
+        serverUrl TEXT not null,
+        data TEXT not null,
+        updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP not null,
+        primary key (key)
+    )`);
+
     await db.execAsync(`CREATE TABLE IF NOT EXISTS lyricsCache (
         id TEXT not null,
         data TEXT not null,
