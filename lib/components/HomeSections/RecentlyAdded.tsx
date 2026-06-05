@@ -37,7 +37,7 @@ export function RecentlyAdded() {
                     title: album.name || album.title,
                     subtitle: album.artist,
                     coverArt: album.coverArt,
-                    coverUri: cover.generateUrl(album.coverArt ?? '', { size: 512 }),
+                    coverUri: cover.generateUrl(album.coverArt ?? '', { size: 300 }),
                     coverCacheKey: `${album.coverArt}-300x300`,
                     type: 'album',
                 }));
