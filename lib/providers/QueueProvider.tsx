@@ -1,5 +1,5 @@
 import { Child } from '@lib/types';
-import React, { createContext, useCallback, useEffect, useRef, useState } from 'react';
+import React, { createContext, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useCache } from '@lib/hooks/useCache';
 import { useApi, useApiHelpers, useCoverBuilder, useServer, useSubsonicParams, useSetting } from '@lib/hooks';
 import qs from 'qs';
@@ -106,6 +106,10 @@ export default function QueueProvider({ children }: { children?: React.ReactNode
     const [repeatMode, setRepeatMode] = useState<RepeatModeValue>('off');
     const playlistIdRef = useRef<string>('agin-queue');
     const trackChildMapRef = useRef<Map<string, Child>>(new Map());
+    // Reference to the source list currently loaded (unshuffled) into the native player.
+    // Lets `replace` skip rebuilding the whole native playlist when the user taps another
+    // song from the same list (e.g. the full library). Invalidated by any other mutation.
+    const loadedListRef = useRef<Child[] | null>(null);
 
     const canGoBackward = nowPlaying.id != '';
     const canGoForward = activeIndex < (queue.length ?? 0) - 1;
@@ -134,16 +138,21 @@ export default function QueueProvider({ children }: { children?: React.ReactNode
         })();
     }, [api, nowPlaying]);
 
+    // Precompute the auth + streaming-quality query string once. Building a queue from the
+    // whole library maps thousands of tracks, so we avoid running qs.stringify per track and
+    // only append the per-track id (and any per-call extras) by concatenation.
+    const streamQueryBase = useMemo(() => {
+        const base: Record<string, any> = { ...(params ?? {}) };
+        if (maxBitRate && maxBitRate !== '0') base.maxBitRate = maxBitRate;
+        if (streamingFormat && streamingFormat !== 'raw') base.format = streamingFormat;
+        return qs.stringify(base);
+    }, [params, maxBitRate, streamingFormat]);
+
     const generateMediaUrl = useCallback((options: StreamOptions) => {
-        const streamParams: StreamOptions = { ...options };
-        if (maxBitRate && maxBitRate !== '0') {
-            streamParams.maxBitRate = maxBitRate;
-        }
-        if (streamingFormat && streamingFormat !== 'raw') {
-            streamParams.format = streamingFormat;
-        }
-        return `${server.url}/rest/stream?${qs.stringify({ ...params, ...streamParams })}`;
-    }, [params, server.url, maxBitRate, streamingFormat]);
+        const { id, ...extra } = options;
+        const extraStr = qs.stringify(extra);
+        return `${server.url}/rest/stream?${streamQueryBase}&id=${encodeURIComponent(id)}${extraStr ? `&${extraStr}` : ''}`;
+    }, [server.url, streamQueryBase]);
 
     const convertToTrackItem = useCallback((data: Child): TQueueItem => {
         const uniqueId = `${data.id}-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
@@ -161,6 +170,9 @@ export default function QueueProvider({ children }: { children?: React.ReactNode
     }, [generateMediaUrl, cover.generateUrl]);
 
     const loadTracks = useCallback((tracks: TQueueItem[]) => {
+        // Rebuilding the native playlist invalidates the fast-path reference; `replace`
+        // sets it again right after when it loaded an unshuffled source list.
+        loadedListRef.current = null;
         try { PlayerQueue.deletePlaylist(playlistIdRef.current); } catch (e) {}
         const newId = PlayerQueue.createPlaylist('agin-queue');
         playlistIdRef.current = newId;
@@ -342,6 +354,7 @@ export default function QueueProvider({ children }: { children?: React.ReactNode
             const track = queue[from];
             if (!track) return;
 
+            loadedListRef.current = null;
             PlayerQueue.reorderTrackInPlaylist(playlistIdRef.current, track.id, to);
             
             setQueue(prevQueue => {
@@ -366,6 +379,7 @@ export default function QueueProvider({ children }: { children?: React.ReactNode
         const data = await cache.fetchChild(id);
         if (!data) return false;
 
+        loadedListRef.current = null;
         const trackItem = convertToTrackItem(data);
         trackChildMapRef.current.set(trackItem.id, data);
         const currentQueue = await TrackPlayer.getActualQueue();
@@ -387,6 +401,7 @@ export default function QueueProvider({ children }: { children?: React.ReactNode
         const data = await cache.fetchChild(id);
         if (!data) return false;
 
+        loadedListRef.current = null;
         const trackItem = convertToTrackItem(data);
         trackChildMapRef.current.set(trackItem.id, data);
         PlayerQueue.addTrackToPlaylist(playlistIdRef.current, trackItem);
@@ -421,14 +436,32 @@ export default function QueueProvider({ children }: { children?: React.ReactNode
     }, [cache, convertToTrackItem, loadTracks]);
 
     const replace = useCallback(async (items: Child[], options?: QueueReplaceOptions) => {
+        const shuffle = !!options?.shuffle;
+        const initialIndex = options?.initialIndex ?? 0;
+
+        // Fast path: the same (unshuffled) source list is already loaded in the native
+        // player — typically tapping another song in the full library. Just jump to the
+        // requested index instead of rebuilding a playlist of thousands of tracks.
+        if (!shuffle && loadedListRef.current === items) {
+            if (options?.source) setSource(options.source);
+            await TrackPlayer.skipToIndex(initialIndex);
+            await TrackPlayer.seek(0);
+            TrackPlayer.play();
+            setNowPlaying(items[initialIndex]);
+            setActiveIndex(initialIndex);
+            await updateQueue();
+            return;
+        }
+
         let itemsCopy = [...items];
-        if (options?.shuffle) itemsCopy = shuffleArray(itemsCopy);
+        if (shuffle) itemsCopy = shuffleArray(itemsCopy);
         if (options?.source) setSource(options.source);
 
         const tracks = itemsCopy.map(convertToTrackItem);
         loadTracks(tracks);
+        // Remember the source list so subsequent taps on the same list take the fast path.
+        if (!shuffle) loadedListRef.current = items;
 
-        const initialIndex = options?.initialIndex ?? 0;
         if (initialIndex > 0) {
             await TrackPlayer.skipToIndex(initialIndex);
         }
@@ -438,7 +471,7 @@ export default function QueueProvider({ children }: { children?: React.ReactNode
         setNowPlaying(itemsCopy[initialIndex]);
         setActiveIndex(initialIndex);
         await updateQueue();
-    }, [convertToTrackItem, loadTracks]);
+    }, [convertToTrackItem, loadTracks, updateQueue]);
 
     const clear = useCallback(async () => {
         TrackPlayer.pause();
