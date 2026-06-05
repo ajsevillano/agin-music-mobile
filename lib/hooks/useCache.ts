@@ -43,6 +43,25 @@ export function useCache() {
         return childData;
     }, [getChild, cacheChild, api]);
 
+    // Persisted full-library cache (keyed by server) so the songs list can be hydrated
+    // instantly on startup instead of re-paginating /search3 and re-sorting every time.
+    const getCachedSongs = useCallback(async (serverUrl: string): Promise<Child[] | null> => {
+        const row = await db.getFirstAsync<{ data: string, serverUrl: string }>('SELECT data, serverUrl FROM libraryCache WHERE key = $key', { $key: 'songs' });
+        if (!row || row.serverUrl !== serverUrl) return null;
+        try {
+            return JSON.parse(row.data) as Child[];
+        } catch {
+            return null;
+        }
+    }, [db]);
+
+    const setCachedSongs = useCallback(async (serverUrl: string, songs: Child[]) => {
+        await db.runAsync(
+            'INSERT OR REPLACE INTO libraryCache (key, serverUrl, data, updatedAt) VALUES ($key, $serverUrl, $data, CURRENT_TIMESTAMP)',
+            { $key: 'songs', $serverUrl: serverUrl, $data: JSON.stringify(songs) },
+        );
+    }, [db]);
+
     const rawFetchLyrics = useCallback(async (songId: string): Promise<StructuredLyrics[] | undefined> => {
         if (!api) return;
 
@@ -104,6 +123,7 @@ export function useCache() {
     const clearMetadata = useCallback(async () => {
         await db.runAsync('DELETE FROM childrenCache');
         await db.runAsync('DELETE FROM lyricsCache');
+        await db.runAsync('DELETE FROM libraryCache');
     }, []);
 
     const clearAll = useCallback(async () => {
@@ -114,6 +134,9 @@ export function useCache() {
     return {
         fetchChild,
         cacheChild,
+
+        getCachedSongs,
+        setCachedSongs,
 
         fetchLyrics,
         cacheLyrics,

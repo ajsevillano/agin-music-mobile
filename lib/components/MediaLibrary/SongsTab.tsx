@@ -25,7 +25,7 @@ export function SongsTab() {
         coverUri: cover.generateUrl(s.coverArt ?? '', { size: layout == 'grid' ? 300 : 128 }),
         coverCacheKey: `${s.coverArt}-${layout == 'grid' ? '300x300' : '128x128'}`,
         type: 'track',
-    })), [cache.cache.allSongs, cover]);
+    })), [cache.cache.allSongs, cover.generateUrl, layout]);
 
     const press = useCallback((item: TMediaLibItem) => {
         const songs = cache.cache.allSongs;

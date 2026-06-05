@@ -1,6 +1,7 @@
 import { createContext, useCallback, useEffect, useState } from 'react';
 import { AlbumID3, AlbumList2, AlbumWithSongsID3, ArtistID3, ArtistsID3, Child, Playlist, PlaylistWithSongs } from '@lib/types';
 import { useApi, useConnection, useServer } from '@lib/hooks';
+import { useCache } from '@lib/hooks/useCache';
 
 export type MemoryCache = {
     allPlaylists: Playlist[];
@@ -46,6 +47,7 @@ export default function MemoryCacheProvider({ children }: { children?: React.Rea
     const [cache, setCache] = useState<MemoryCache>(initialCache.cache);
     const api = useApi();
     const { server } = useServer();
+    const { getCachedSongs, setCachedSongs } = useCache();
     const { markServerOk, markServerUnreachable, retryToken } = useConnection();
 
     const clear = useCallback(() => {
@@ -137,6 +139,17 @@ export default function MemoryCacheProvider({ children }: { children?: React.Rea
     const refreshSongs = useCallback(async () => {
         if (!api) return;
 
+        // Hydrate instantly from the persisted (already sorted) cache so the list shows up
+        // without re-paginating /search3 or re-sorting thousands of songs on every startup.
+        try {
+            const cached = await getCachedSongs(server.url);
+            if (cached && cached.length > 0) {
+                setCache(c => (c.allSongs.length === 0 ? { ...c, allSongs: cached } : c));
+            }
+        } catch {
+            // Ignore cache read errors; fall through to a network refresh.
+        }
+
         try {
             // Subsonic has no "get all songs" endpoint. /getRandomSongs returns a
             // random, capped subset, so songs would randomly go missing from the list.
@@ -164,11 +177,13 @@ export default function MemoryCacheProvider({ children }: { children?: React.Rea
             );
 
             setCache(c => ({ ...c, allSongs: sorted }));
+            // Persist the sorted library for the next startup (fire and forget).
+            setCachedSongs(server.url, sorted).catch(() => { });
             return sorted;
         } catch {
             markServerUnreachable();
         }
-    }, [api, server.url, markServerOk, markServerUnreachable, retryToken]);
+    }, [api, server.url, getCachedSongs, setCachedSongs, markServerOk, markServerUnreachable, retryToken]);
 
     // Prefetch the data
     useEffect(() => {
