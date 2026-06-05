@@ -247,19 +247,30 @@ export default function QueueProvider({ children }: { children?: React.ReactNode
         updateActive();
     }, []);
 
+    // Persist the (heavy) queue contents only when the queue, its source or the repeat mode
+    // change — NOT on every track change. The queue can hold thousands of songs, so writing
+    // it on each activeIndex change would re-serialize the whole thing to disk constantly
+    // and cause stutter while playing.
     useEffect(() => {
         if (persistQueue) {
             const stateToSave = {
                 queue: queue.map(q => q._child),
-                activeIndex,
                 source,
                 repeatMode,
             };
             AsyncStorage.setItem('@agin:queue_state', JSON.stringify(stateToSave)).catch(console.error);
         } else if (persistQueue === false) {
             AsyncStorage.removeItem('@agin:queue_state').catch(console.error);
+            AsyncStorage.removeItem('@agin:queue_index').catch(console.error);
         }
-    }, [queue, activeIndex, source, repeatMode, persistQueue]);
+    }, [queue, source, repeatMode, persistQueue]);
+
+    // Persist just the active index (a tiny value) on every track change.
+    useEffect(() => {
+        if (persistQueue) {
+            AsyncStorage.setItem('@agin:queue_index', String(activeIndex)).catch(console.error);
+        }
+    }, [activeIndex, persistQueue]);
 
     useEffect(() => {
         const restoreQueue = async () => {
@@ -273,8 +284,12 @@ export default function QueueProvider({ children }: { children?: React.ReactNode
                     if (savedState.queue && savedState.queue.length > 0) {
                         const tracks = savedState.queue.map(convertToTrackItem);
                         loadTracks(tracks);
-                        if (savedState.activeIndex !== undefined) {
-                            await TrackPlayer.skipToIndex(savedState.activeIndex);
+                        // Active index lives in its own key now; fall back to the legacy
+                        // field for queues saved before this split.
+                        const savedIndexStr = await AsyncStorage.getItem('@agin:queue_index');
+                        const restoredIndex = savedIndexStr != null ? parseInt(savedIndexStr, 10) : savedState.activeIndex;
+                        if (restoredIndex !== undefined && !Number.isNaN(restoredIndex)) {
+                            await TrackPlayer.skipToIndex(restoredIndex);
                         }
                         if (savedState.source) {
                             setSource(savedState.source);
