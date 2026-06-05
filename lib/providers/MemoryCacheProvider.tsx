@@ -87,14 +87,27 @@ export default function MemoryCacheProvider({ children }: { children?: React.Rea
     }, [api, server.url, markServerOk, markServerUnreachable, retryToken]);
 
     const refreshAlbums = useCallback(async () => {
-        // TODO: Add pagination support
         if (!api) return;
 
         try {
-            const albumsRes = await api.get('/getAlbumList2', { params: { type: 'alphabeticalByName', size: 500 } });
-            const albums = albumsRes.data?.['subsonic-response']?.albumList2?.album as AlbumID3[];
+            // getAlbumList2 caps each page at 500, so paginate via offset to load the whole
+            // library instead of silently truncating at 500 albums.
+            const pageSize = 500;
+            const albums: AlbumID3[] = [];
+            let offset = 0;
+
+            while (true) {
+                const albumsRes = await api.get('/getAlbumList2', { params: { type: 'alphabeticalByName', size: pageSize, offset } });
+                const page = albumsRes.data?.['subsonic-response']?.albumList2?.album as AlbumID3[] | undefined;
+                if (!page || page.length === 0) break;
+
+                albums.push(...page);
+                if (page.length < pageSize) break;
+                offset += pageSize;
+            }
+
             markServerOk();
-            if (!albums) return;
+            if (albums.length === 0) return;
 
             setCache(c => ({ ...c, allAlbums: albums }));
             return albums;
