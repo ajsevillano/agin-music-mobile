@@ -8,7 +8,7 @@ import * as Haptics from 'expo-haptics';
 import { TrackPlayer, PlayerQueue, useOnPlaybackProgressChange, useOnChangeTrack, TrackItem } from 'react-native-nitro-player';
 import showToast from '@lib/showToast';
 import { IconExclamationCircle } from '@tabler/icons-react-native';
-import { shuffleArray } from '@lib/util';
+import { shuffleArray, needsTranscode, FALLBACK_TRANSCODE_FORMAT } from '@lib/util';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export type RepeatModeValue = 'off' | 'Playlist' | 'track';
@@ -92,6 +92,8 @@ export const QueueContext = createContext<QueueContextType>(initialQueueContext)
 
 export type StreamOptions = {
     id: string;
+    /** Source file suffix (e.g. 'wma'); used to force transcoding of incompatible formats. */
+    suffix?: string;
     maxBitRate?: string;
     format?: string;
     timeOffset?: string;
@@ -149,10 +151,14 @@ export default function QueueProvider({ children }: { children?: React.ReactNode
     }, [params, maxBitRate, streamingFormat]);
 
     const generateMediaUrl = useCallback((options: StreamOptions) => {
-        const { id, ...extra } = options;
+        const { id, suffix, ...extra } = options;
         const extraStr = qs.stringify(extra);
-        return `${server.url}/rest/stream?${streamQueryBase}&id=${encodeURIComponent(id)}${extraStr ? `&${extraStr}` : ''}`;
-    }, [server.url, streamQueryBase]);
+        // Formats mobile players can't decode (e.g. WMA) must be transcoded server-side.
+        // Force a safe transcode unless the user already picked a transcoding format.
+        const force = needsTranscode(suffix) && (!streamingFormat || streamingFormat === 'raw');
+        const forceStr = force ? `&format=${FALLBACK_TRANSCODE_FORMAT}` : '';
+        return `${server.url}/rest/stream?${streamQueryBase}&id=${encodeURIComponent(id)}${extraStr ? `&${extraStr}` : ''}${forceStr}`;
+    }, [server.url, streamQueryBase, streamingFormat]);
 
     const convertToTrackItem = useCallback((data: Child): TQueueItem => {
         const uniqueId = `${data.id}-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
@@ -162,7 +168,7 @@ export default function QueueProvider({ children }: { children?: React.ReactNode
             artist: data.artist ?? '',
             album: data.album ?? '',
             duration: data.duration ?? 0,
-            url: generateMediaUrl({ id: data.id }),
+            url: generateMediaUrl({ id: data.id, suffix: data.suffix }),
             artwork: cover.generateUrl(data.coverArt || data.id),
             extraPayload: { _child: data } as any,
             _child: data,

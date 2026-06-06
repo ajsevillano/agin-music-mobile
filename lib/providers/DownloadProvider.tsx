@@ -11,6 +11,7 @@ import {
     DownloadStorageInfo,
 } from 'react-native-nitro-player';
 import { Child } from '@lib/types';
+import { needsTranscode, FALLBACK_TRANSCODE_FORMAT } from '@lib/util';
 import qs from 'qs';
 import showToast from '@lib/showToast';
 import { IconCircleCheck, IconCircleX, IconDownload, IconWifi } from '@tabler/icons-react-native';
@@ -307,6 +308,9 @@ export default function DownloadProvider({ children }: { children?: React.ReactN
         }
         if (streamingFormat && streamingFormat !== 'raw') {
             streamParams.format = streamingFormat;
+        } else if (needsTranscode(child.suffix)) {
+            // Download incompatible formats (e.g. WMA) transcoded so they're playable offline.
+            streamParams.format = FALLBACK_TRANSCODE_FORMAT;
         }
         const streamUrl = `${server.url}/rest/stream?${qs.stringify(streamParams)}`;
         return {
