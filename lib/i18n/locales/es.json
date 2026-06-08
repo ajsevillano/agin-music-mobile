@@ -154,7 +154,8 @@
         "local": "Usando dirección local",
         "remote": "Usando dirección remota",
         "single": "Usando dirección del servidor",
-        "none": "Sin servidor configurado"
+        "none": "Sin servidor configurado",
+        "offline": "No se puede contactar con el servidor"
       }
     },
     "persistQueue": {

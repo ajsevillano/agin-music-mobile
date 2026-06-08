@@ -35,6 +35,11 @@ export type ConnectionInfo = {
     source: ActiveUrlSource;
     /** True while a reachability probe is running. */
     checking: boolean;
+    /**
+     * Authoritative result of the last probe: true/false when a probe ran,
+     * null in legacy single-URL mode where data fetches drive the status.
+     */
+    reachable: boolean | null;
 };
 
 /** How long to wait for the local URL to answer before falling back to the remote one. */
@@ -72,7 +77,7 @@ export type ServerContextType = {
 const initialServerContext: ServerContextType = {
     server: initialServer,
     serverAuth: {},
-    connection: { activeUrl: '', source: 'none', checking: false },
+    connection: { activeUrl: '', source: 'none', checking: false, reachable: null },
     discoverServer: () => { },
     saveAndTestPasswordCredentials: async () => { return false; },
     setServerUrls: () => { },
@@ -115,7 +120,7 @@ export default function ServerProvider({ children }: { children?: React.ReactNod
     const [server, setServer] = useState<Server>(initialServer);
     const [serverAuth, setServerAuth] = useState<ServerAuth>({});
     const [isLoading, setIsLoading] = useState(true);
-    const [connection, setConnection] = useState<ConnectionInfo>({ activeUrl: '', source: 'none', checking: false });
+    const [connection, setConnection] = useState<ConnectionInfo>({ activeUrl: '', source: 'none', checking: false, reachable: null });
 
     const network = useNetworkState();
 
@@ -128,9 +133,9 @@ export default function ServerProvider({ children }: { children?: React.ReactNod
     // Increments on each resolve so a slow probe can't override a newer result.
     const resolveIdRef = useRef(0);
 
-    const applyActiveUrl = useCallback((url: string, source: ActiveUrlSource) => {
+    const applyActiveUrl = useCallback((url: string, source: ActiveUrlSource, reachable: boolean | null) => {
         setServer(prev => (prev.url === url ? prev : { ...prev, url }));
-        setConnection({ activeUrl: url, source, checking: false });
+        setConnection({ activeUrl: url, source, checking: false, reachable });
     }, []);
 
     const resolveAndApply = useCallback(async () => {
@@ -139,24 +144,31 @@ export default function ServerProvider({ children }: { children?: React.ReactNod
         const local = s.localUrl?.trim() || '';
         const remote = s.remoteUrl?.trim() || '';
 
-        // No dual config: keep whatever single URL we have (legacy / fresh login).
+        // Legacy single-URL setup: no probe, let data fetches drive the status.
         if (!local && !remote) {
-            setConnection({ activeUrl: s.url, source: s.url ? 'single' : 'none', checking: false });
+            setConnection({ activeUrl: s.url, source: s.url ? 'single' : 'none', checking: false, reachable: null });
             return;
         }
-        if (local && !remote) return applyActiveUrl(local, 'local');
-        if (!local && remote) return applyActiveUrl(remote, 'remote');
 
-        // Both set: try the local URL first, fall back to the remote one.
+        // Try the local URL first (home), then the remote one (e.g. Tailscale).
+        const candidates: { url: string; source: ActiveUrlSource }[] = [];
+        if (local) candidates.push({ url: local, source: 'local' });
+        if (remote) candidates.push({ url: remote, source: 'remote' });
+
         const params = buildPingParams(s, serverAuthRef.current);
         if (!params) {
-            // Can't probe yet (no credentials) — prefer local optimistically.
-            return applyActiveUrl(local, 'local');
+            // No credentials to probe yet — adopt the preferred URL optimistically.
+            return applyActiveUrl(candidates[0].url, candidates[0].source, null);
         }
+
         setConnection(c => ({ ...c, checking: true }));
-        const localReachable = await pingUrl(local, params);
-        if (runId !== resolveIdRef.current) return; // superseded by a newer resolve
-        applyActiveUrl(localReachable ? local : remote, localReachable ? 'local' : 'remote');
+        for (const candidate of candidates) {
+            const ok = await pingUrl(candidate.url, params);
+            if (runId !== resolveIdRef.current) return; // superseded by a newer resolve
+            if (ok) return applyActiveUrl(candidate.url, candidate.source, true);
+        }
+        // None reachable: keep the preferred URL active but flag the outage.
+        applyActiveUrl(candidates[0].url, candidates[0].source, false);
     }, [applyActiveUrl]);
 
     useEffect(() => {
@@ -358,7 +370,7 @@ export default function ServerProvider({ children }: { children?: React.ReactNod
     const logOut = useCallback(async () => {
         setServer(initialServer);
         setServerAuth({});
-        setConnection({ activeUrl: '', source: 'none', checking: false });
+        setConnection({ activeUrl: '', source: 'none', checking: false, reachable: null });
         await SecureStore.deleteItemAsync('password');
         await AsyncStorage.removeItem('server');
     }, []);

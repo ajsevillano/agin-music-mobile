@@ -49,7 +49,9 @@ export default function ConnectionSettings() {
 
     const sourceLabel = connection.checking
         ? t('settings.connection.checking')
-        : t(`settings.connection.sources.${connection.source}`);
+        : connection.reachable === false
+            ? t('settings.connection.sources.offline')
+            : t(`settings.connection.sources.${connection.source}`);
 
     const handleSave = () => {
         setServerUrls(local, remote);
