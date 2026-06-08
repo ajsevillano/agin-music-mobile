@@ -85,7 +85,7 @@ function Overlay({ position }: { position: 'left' | 'right' }) {
     return (
         <LinearGradient
             style={styles.overlay}
-            colors={position == 'left' ? [colors.secondaryBackground, colors.secondaryBackground + '00'] : [colors.secondaryBackground + '00', colors.secondaryBackground]}
+            colors={position == 'left' ? [colors.playerBackground, colors.playerBackground + '00'] : [colors.playerBackground + '00', colors.playerBackground]}
             start={[0, 0]}
             end={[1, 0]}
         />
@@ -112,7 +112,7 @@ export default function Miniplayer() {
 
     const styles = useMemo(() => StyleSheet.create({
         miniplayer: {
-            backgroundColor: colors.secondaryBackground,
+            backgroundColor: colors.playerBackground,
             marginHorizontal: 15,
             borderRadius: 16,
             height: 55,
@@ -149,7 +149,7 @@ export default function Miniplayer() {
             flex: 1,
             position: 'relative',
         }
-    }), [colors.secondaryBackground]);
+    }), [colors.playerBackground]);
 
     const isEmpty = nowPlaying.id === '';
 
