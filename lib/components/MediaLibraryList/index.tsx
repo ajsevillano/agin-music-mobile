@@ -52,10 +52,14 @@ export default function MediaLibraryList({ data, layout = 'list', size = 'large'
         }
     }), [layout, isFullHeight, tabsHeight]);
 
+    const isEmpty = data.length === 0;
+
     const contentStyle = useMemo(() => ({
         paddingTop: withTopMargin ? (isGrid ? 10 : 5) : 0,
         ...(isGrid ? { paddingHorizontal: 20 } : {}),
-    }), [withTopMargin, isGrid]);
+        // Let the empty component fill the viewport so it can center vertically.
+        ...(isEmpty ? { flexGrow: 1 } : {}),
+    }), [withTopMargin, isGrid, isEmpty]);
 
     const estimatedItemSize = layout === 'grid' ? 200 : layout === 'gridCompact' ? 150 : 62;
 
