@@ -13,6 +13,10 @@ export const LANGUAGE_NAMES: Record<SupportedLanguage, string> = {
     es: 'Español',
 };
 
+// Shared with the generic `Setting` component (id 'app.language'), which
+// persists every setting JSON-encoded under `settings.<id>`. We MUST use the
+// same key and encoding, otherwise the two writers fight over this key and the
+// saved language is read back as an invalid value on the next launch.
 const LANGUAGE_STORAGE_KEY = 'settings.app.language';
 
 function getDeviceLanguage(): SupportedLanguage {
@@ -22,14 +26,29 @@ function getDeviceLanguage(): SupportedLanguage {
         : 'en';
 }
 
+function isSupported(value: unknown): value is SupportedLanguage {
+    return typeof value === 'string' && SUPPORTED_LANGUAGES.includes(value as SupportedLanguage);
+}
+
+// The Setting component stores values JSON-encoded (e.g. `"en"`). Older builds
+// of this module wrote the raw string (`en`). Accept both so existing installs
+// don't get stuck on the wrong language.
+function parseStoredLanguage(stored: string | null): SupportedLanguage | null {
+    if (!stored) return null;
+    try {
+        const parsed = JSON.parse(stored);
+        if (isSupported(parsed)) return parsed;
+    } catch {
+        // Not JSON — fall back to treating it as a raw value.
+    }
+    return isSupported(stored) ? stored : null;
+}
+
 export async function initI18n() {
     let savedLanguage: SupportedLanguage | null = null;
 
     try {
-        const stored = await AsyncStorage.getItem(LANGUAGE_STORAGE_KEY);
-        if (stored && SUPPORTED_LANGUAGES.includes(stored as SupportedLanguage)) {
-            savedLanguage = stored as SupportedLanguage;
-        }
+        savedLanguage = parseStoredLanguage(await AsyncStorage.getItem(LANGUAGE_STORAGE_KEY));
     } catch {
         // Fall through to device default
     }
@@ -51,7 +70,8 @@ export async function initI18n() {
 }
 
 export async function changeLanguage(lang: SupportedLanguage) {
-    await AsyncStorage.setItem(LANGUAGE_STORAGE_KEY, lang);
+    // JSON-encode to match the `Setting` component's storage format on the same key.
+    await AsyncStorage.setItem(LANGUAGE_STORAGE_KEY, JSON.stringify(lang));
     await i18n.changeLanguage(lang);
 }
 
