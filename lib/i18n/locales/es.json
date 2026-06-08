@@ -128,6 +128,7 @@
   "settings": {
     "title": "Ajustes",
     "sections": {
+      "connection": "Conexión",
       "launch": "Inicio",
       "streamingQuality": "Calidad de Streaming",
       "equalizer": "Ecualizador",
@@ -137,6 +138,24 @@
       "developer": "Opciones de Desarrollador",
       "appearance": "Tema",
       "language": "Idioma"
+    },
+    "connection": {
+      "sectionDescription": "Usa una dirección local en casa y una remota (p. ej. Tailscale) cuando estés fuera. La app elige automáticamente.",
+      "localLabel": "URL local (red de casa)",
+      "localPlaceholder": "http://192.168.1.10:4533",
+      "remoteLabel": "URL remota (fuera de casa)",
+      "remotePlaceholder": "https://tu-servidor.tailnet.ts.net",
+      "save": "Guardar direcciones",
+      "recheck": "Recomprobar",
+      "checking": "Comprobando conexión…",
+      "savedTitle": "Direcciones guardadas",
+      "savedSubtitle": "La app elegirá automáticamente la que esté disponible.",
+      "sources": {
+        "local": "Usando dirección local",
+        "remote": "Usando dirección remota",
+        "single": "Usando dirección del servidor",
+        "none": "Sin servidor configurado"
+      }
     },
     "persistQueue": {
       "label": "Mantener Cola al Reiniciar",

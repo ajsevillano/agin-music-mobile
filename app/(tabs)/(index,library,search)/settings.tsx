@@ -2,6 +2,7 @@ import Container from '@lib/components/Container';
 import Header from '@lib/components/Header';
 import Setting, { SettingSelectOption } from '@lib/components/Setting';
 import SettingsSection from '@lib/components/SettingsSection';
+import ConnectionSettings from '@lib/components/ConnectionSettings';
 import Title from '@lib/components/Title';
 import { useCache, useColors, useMemoryCache, useTabsHeight } from '@lib/hooks';
 import { IconCircleCheck, IconContrast, IconDoor, IconFileMusic, IconLanguage, IconLayoutGrid, IconVolume, IconWifi } from '@tabler/icons-react-native';
@@ -222,6 +223,8 @@ export default function Settings() {
             <Header title={t('settings.title')} withBackIcon withAvatar={false} titleSize={20} />
             <ScrollView contentContainerStyle={{ paddingBottom: tabsHeight }}>
                 <View style={styles.settings}>
+                    <SettingsSection label={t('settings.sections.connection')} description={t('settings.connection.sectionDescription')} />
+                    <ConnectionSettings />
                     <SettingsSection label={t('settings.sections.launch')} />
                     <Setting
                         id='app.persistQueue'
