@@ -4,7 +4,7 @@ import Setting, { SettingSelectOption } from '@lib/components/Setting';
 import SettingsSection from '@lib/components/SettingsSection';
 import Title from '@lib/components/Title';
 import { useCache, useColors, useMemoryCache, useTabsHeight } from '@lib/hooks';
-import { IconCircleCheck, IconDoor, IconFileMusic, IconLanguage, IconLayoutGrid, IconVolume, IconWifi } from '@tabler/icons-react-native';
+import { IconCircleCheck, IconContrast, IconDoor, IconFileMusic, IconLanguage, IconLayoutGrid, IconVolume, IconWifi } from '@tabler/icons-react-native';
 import { useCallback, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Switch, View } from 'react-native';
 import { SheetManager } from 'react-native-actions-sheet';
@@ -15,7 +15,7 @@ import { useTranslation } from 'react-i18next';
 import { LANGUAGE_NAMES, SUPPORTED_LANGUAGES, changeLanguage, SupportedLanguage } from '@lib/i18n';
 
 
-export type SettingId = 'streaming.maxBitRate' | 'streaming.format' | 'storage.clearCache' | 'developer.copyId' | 'ui.toastPosition' | 'ui.autoFocusSearchBar' | 'app.defaultTab' | 'app.defaultLibraryTab' | 'eq.enabled' | 'downloads.wifiOnly' | 'app.persistQueue' | 'downloads.maxBitRate' | 'downloads.format' | 'app.language';
+export type SettingId = 'streaming.maxBitRate' | 'streaming.format' | 'storage.clearCache' | 'developer.copyId' | 'ui.toastPosition' | 'ui.autoFocusSearchBar' | 'app.defaultTab' | 'app.defaultLibraryTab' | 'eq.enabled' | 'downloads.wifiOnly' | 'app.persistQueue' | 'downloads.maxBitRate' | 'downloads.format' | 'app.language' | 'app.theme';
 
 const EQ_PRESETS: Record<string, number[]> = {
     Flat:      [0, 0, 0, 0, 0],
@@ -183,6 +183,12 @@ export default function Settings() {
         { label: t('options.format.oggLabel'), description: t('options.format.ogg'), value: 'ogg', shortLabel: 'OGG' },
     ], [t]);
 
+    const themeOptions = useMemo<SettingSelectOption[]>(() => [
+        { label: t('settings.theme.options.system'), description: t('settings.theme.options.systemDesc'), value: 'system', shortLabel: t('settings.theme.options.system') },
+        { label: t('settings.theme.options.light'), description: t('settings.theme.options.lightDesc'), value: 'light', shortLabel: t('settings.theme.options.light') },
+        { label: t('settings.theme.options.dark'), description: t('settings.theme.options.darkDesc'), value: 'dark', shortLabel: t('settings.theme.options.dark') },
+    ], [t]);
+
     const defaultTabOptions = useMemo<SettingSelectOption[]>(() => [
         { label: t('tabs.home'), description: t('options.defaultTab.homeDesc'), value: 'home', shortLabel: t('tabs.home') },
         { label: t('tabs.library'), description: t('options.defaultTab.libraryDesc'), value: 'library', shortLabel: t('tabs.library') },
@@ -337,6 +343,16 @@ export default function Settings() {
                         type='switch'
                         label={t('settings.copyId.label')}
                         description={t('settings.copyId.description')}
+                    />
+                    <SettingsSection label={t('settings.sections.appearance')} />
+                    <Setting
+                        id='app.theme'
+                        type='select'
+                        label={t('settings.theme.label')}
+                        description={t('settings.theme.description')}
+                        icon={IconContrast}
+                        defaultValue='system'
+                        options={themeOptions}
                     />
                     <SettingsSection label={t('settings.sections.language')} />
                     <Setting
