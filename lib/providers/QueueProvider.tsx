@@ -187,6 +187,11 @@ export default function QueueProvider({ children }: { children?: React.ReactNode
         }
         PlayerQueue.loadPlaylist(newId);
         tracks.forEach(t => trackChildMapRef.current.set(t.id, t._child));
+        // Set the queue optimistically from the tracks we already have (each carries its
+        // full _child). Otherwise we'd rely on updateQueue()'s getActualQueue() round-trip,
+        // which can read an empty/not-ready native queue right after a load and leave the
+        // miniplayer blank (no title/cover) until the next change.
+        setQueue(tracks);
     }, []);
 
     const updateNowPlaying = useCallback(async () => {
@@ -219,7 +224,10 @@ export default function QueueProvider({ children }: { children?: React.ReactNode
     const updateQueue = useCallback(async () => {
         try {
             const currentQueue = await TrackPlayer.getActualQueue();
-            const enrichedQueue = (currentQueue ?? []).map(track => ({
+            // Don't clobber an already-set queue with an empty/not-ready native read.
+            // Genuine emptying goes through clear()/loadTracks([]) which set the queue directly.
+            if (!currentQueue || currentQueue.length === 0) return;
+            const enrichedQueue = currentQueue.map(track => ({
                 ...track,
                 _child: trackChildMapRef.current.get(track.id) ?? {
                     id: track.id,
