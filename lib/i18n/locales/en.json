@@ -128,6 +128,7 @@
   "settings": {
     "title": "Settings",
     "sections": {
+      "connection": "Connection",
       "launch": "Launch",
       "streamingQuality": "Streaming Quality",
       "equalizer": "Equalizer",
@@ -137,6 +138,24 @@
       "developer": "Developer Options",
       "appearance": "Appearance",
       "language": "Language"
+    },
+    "connection": {
+      "sectionDescription": "Use a local address at home and a remote one (e.g. Tailscale) when away. The app picks automatically.",
+      "localLabel": "Local URL (home network)",
+      "localPlaceholder": "http://192.168.1.10:4533",
+      "remoteLabel": "Remote URL (away)",
+      "remotePlaceholder": "https://your-server.tailnet.ts.net",
+      "save": "Save addresses",
+      "recheck": "Re-check",
+      "checking": "Checking connection…",
+      "savedTitle": "Addresses saved",
+      "savedSubtitle": "The app will pick the reachable one automatically.",
+      "sources": {
+        "local": "Using local address",
+        "remote": "Using remote address",
+        "single": "Using server address",
+        "none": "No server configured"
+      }
     },
     "persistQueue": {
       "label": "Persist Queue on Restart",
