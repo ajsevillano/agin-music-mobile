@@ -59,18 +59,12 @@ export default function ConnectionProvider({ children }: { children?: React.Reac
     }, []);
 
     const value = useMemo<ConnectionContextType>(() => {
-        // The dual-URL probe is authoritative: it knows whether local/remote
-        // actually answered. Per-fetch markers (markServer*) can race when the
-        // active URL switches networks, so they only drive the status in legacy
-        // single-URL mode (connection.reachable === null).
+        // The dual-URL probe is authoritative: it actually tried to reach the
+        // server, so it trumps expo-network's isInternetReachable, which is
+        // unreliable over a VPN/Tailscale (it often reports false even though the
+        // server is perfectly reachable). Per-fetch markers (markServer*) only
+        // drive the status in legacy single-URL mode (connection.reachable null).
         const probe = connection.reachable;
-        const serverIssue = connection.checking
-            ? false // don't flash an error while a probe is in flight
-            : probe === true
-                ? false
-                : probe === false
-                    ? true
-                    : serverStatus === 'unreachable';
 
         const effectiveServerStatus: ServerStatus = connection.checking
             ? 'unknown'
@@ -80,7 +74,13 @@ export default function ConnectionProvider({ children }: { children?: React.Reac
                     ? 'unreachable'
                     : serverStatus;
 
-        const hasConnectionIssue = !isOnline || serverIssue;
+        const hasConnectionIssue = connection.checking
+            ? false // don't flash an error while a probe is in flight
+            : probe === true
+                ? false // server answered the probe → we're connected, ignore isOnline
+                : probe === false
+                    ? true // neither URL answered
+                    : !isOnline || serverStatus === 'unreachable';
 
         const connectionMode: ConnectionMode = hasConnectionIssue
             ? 'offline'

@@ -45,6 +45,9 @@ export type ConnectionInfo = {
 /** How long to wait for the local URL to answer before falling back to the remote one. */
 const PROBE_TIMEOUT = 2500;
 
+/** How often to re-probe while foregrounded, to catch VPN/network transitions. */
+const REPROBE_INTERVAL = 15000;
+
 export type ServerAuth = {
     salt?: string;
     hash?: string;
@@ -133,12 +136,23 @@ export default function ServerProvider({ children }: { children?: React.ReactNod
     // Increments on each resolve so a slow probe can't override a newer result.
     const resolveIdRef = useRef(0);
 
-    const applyActiveUrl = useCallback((url: string, source: ActiveUrlSource, reachable: boolean | null) => {
-        setServer(prev => (prev.url === url ? prev : { ...prev, url }));
-        setConnection({ activeUrl: url, source, checking: false, reachable });
+    // Only update connection state when something actually changed, so the
+    // periodic re-probe doesn't churn renders while the status is stable.
+    const setConnectionIfChanged = useCallback((next: ConnectionInfo) => {
+        setConnection(prev =>
+            prev.activeUrl === next.activeUrl && prev.source === next.source
+                && prev.checking === next.checking && prev.reachable === next.reachable
+                ? prev : next);
     }, []);
 
-    const resolveAndApply = useCallback(async () => {
+    const applyActiveUrl = useCallback((url: string, source: ActiveUrlSource, reachable: boolean | null) => {
+        setServer(prev => (prev.url === url ? prev : { ...prev, url }));
+        setConnectionIfChanged({ activeUrl: url, source, checking: false, reachable });
+    }, [setConnectionIfChanged]);
+
+    // silent: background re-probes (network change / foreground / polling) skip
+    // the "checking" flash so the UI doesn't flicker every cycle.
+    const resolveAndApply = useCallback(async (silent = false) => {
         const runId = ++resolveIdRef.current;
         const s = serverRef.current;
         const local = s.localUrl?.trim() || '';
@@ -146,7 +160,7 @@ export default function ServerProvider({ children }: { children?: React.ReactNod
 
         // Legacy single-URL setup: no probe, let data fetches drive the status.
         if (!local && !remote) {
-            setConnection({ activeUrl: s.url, source: s.url ? 'single' : 'none', checking: false, reachable: null });
+            setConnectionIfChanged({ activeUrl: s.url, source: s.url ? 'single' : 'none', checking: false, reachable: null });
             return;
         }
 
@@ -161,7 +175,7 @@ export default function ServerProvider({ children }: { children?: React.ReactNod
             return applyActiveUrl(candidates[0].url, candidates[0].source, null);
         }
 
-        setConnection(c => ({ ...c, checking: true }));
+        if (!silent) setConnection(c => ({ ...c, checking: true }));
         for (const candidate of candidates) {
             const ok = await pingUrl(candidate.url, params);
             if (runId !== resolveIdRef.current) return; // superseded by a newer resolve
@@ -169,7 +183,7 @@ export default function ServerProvider({ children }: { children?: React.ReactNod
         }
         // None reachable: keep the preferred URL active but flag the outage.
         applyActiveUrl(candidates[0].url, candidates[0].source, false);
-    }, [applyActiveUrl]);
+    }, [applyActiveUrl, setConnectionIfChanged]);
 
     useEffect(() => {
         if (server.url == '') return;
@@ -223,18 +237,37 @@ export default function ServerProvider({ children }: { children?: React.ReactNod
         })();
     }, [server.auth.password, server.authMethod]);
 
-    // Re-resolve the active URL whenever the config, credentials or network change.
+    // Visible re-resolve on the initial load and when the config/credentials change.
     useEffect(() => {
         if (isLoading) return;
-        resolveAndApply();
-    }, [isLoading, server.localUrl, server.remoteUrl, server.auth.username, server.auth.password, server.authMethod, serverAuth.hash, serverAuth.salt, network.isConnected, network.isInternetReachable, network.type, resolveAndApply]);
+        resolveAndApply(false);
+    }, [isLoading, server.localUrl, server.remoteUrl, server.auth.username, server.auth.password, server.authMethod, serverAuth.hash, serverAuth.salt, resolveAndApply]);
 
-    // Re-probe when the app returns to the foreground (e.g. you got home / left).
+    // Silent re-probe when the reported network changes (e.g. Wi-Fi -> cellular).
     useEffect(() => {
+        if (isLoading) return;
+        resolveAndApply(true);
+    }, [isLoading, network.isConnected, network.isInternetReachable, network.type, resolveAndApply]);
+
+    // Foreground + periodic safety net. Network-type changes are not reported
+    // when a VPN (Tailscale) goes up/down on the same underlying network, so we
+    // also re-probe on a timer while the app is in the foreground to catch
+    // Wi-Fi <-> VPN <-> cellular transitions.
+    useEffect(() => {
+        if (isLoading) return;
+        let interval: ReturnType<typeof setInterval> | null = null;
+        const startPolling = () => {
+            if (!interval) interval = setInterval(() => resolveAndApply(true), REPROBE_INTERVAL);
+        };
+        const stopPolling = () => {
+            if (interval) { clearInterval(interval); interval = null; }
+        };
         const sub = AppState.addEventListener('change', state => {
-            if (state === 'active' && !isLoading) resolveAndApply();
+            if (state === 'active') { resolveAndApply(true); startPolling(); }
+            else stopPolling();
         });
-        return () => sub.remove();
+        if (AppState.currentState === 'active') startPolling();
+        return () => { stopPolling(); sub.remove(); };
     }, [isLoading, resolveAndApply]);
 
     const setServerUrls = useCallback((localUrl: string, remoteUrl: string) => {
@@ -244,7 +277,7 @@ export default function ServerProvider({ children }: { children?: React.ReactNod
     }, []);
 
     const recheckConnection = useCallback(() => {
-        resolveAndApply();
+        resolveAndApply(false);
     }, [resolveAndApply]);
 
     const discoverServer = useCallback(async (url: string): Promise<DiscoverServerResult> => {
