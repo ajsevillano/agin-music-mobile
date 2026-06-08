@@ -135,6 +135,7 @@
       "storage": "Almacenamiento",
       "layout": "Apariencia",
       "developer": "Opciones de Desarrollador",
+      "appearance": "Tema",
       "language": "Idioma"
     },
     "persistQueue": {
@@ -193,6 +194,18 @@
     "copyId": {
       "label": "Opción Copiar ID",
       "description": "Mostrar la opción de copiar ID en toda la app"
+    },
+    "theme": {
+      "label": "Tema",
+      "description": "Elige una apariencia clara u oscura, o sigue la de tu dispositivo",
+      "options": {
+        "system": "Predeterminado del sistema",
+        "systemDesc": "Seguir la apariencia del dispositivo",
+        "light": "Claro",
+        "lightDesc": "Usar siempre el tema claro",
+        "dark": "Oscuro",
+        "darkDesc": "Usar siempre el tema oscuro"
+      }
     },
     "language": {
       "label": "Idioma de la App",

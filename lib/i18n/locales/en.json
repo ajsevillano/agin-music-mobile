@@ -135,6 +135,7 @@
       "storage": "Storage",
       "layout": "Layout",
       "developer": "Developer Options",
+      "appearance": "Appearance",
       "language": "Language"
     },
     "persistQueue": {
@@ -193,6 +194,18 @@
     "copyId": {
       "label": "Copy ID Option",
       "description": "Show the copy ID option across the app"
+    },
+    "theme": {
+      "label": "Theme",
+      "description": "Choose a light or dark appearance, or follow your device",
+      "options": {
+        "system": "System default",
+        "systemDesc": "Match your device appearance",
+        "light": "Light",
+        "lightDesc": "Always use the light theme",
+        "dark": "Dark",
+        "darkDesc": "Always use the dark theme"
+      }
     },
     "language": {
       "label": "App Language",
