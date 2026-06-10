@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { createContext, useCallback, useEffect, useRef, useState } from 'react';
 import { AppState } from 'react-native';
-import { useNetworkState } from 'expo-network';
+import { useNetworkState, NetworkStateType } from 'expo-network';
 import { fixUrl, generateSubsonicToken } from '@lib/util';
 import { BaseResponse, DiscoverServerResult, OpenSubsonicExtensions } from '@lib/types';
 import config from '../constants/config';
@@ -42,8 +42,23 @@ export type ConnectionInfo = {
     reachable: boolean | null;
 };
 
-/** How long to wait for the local URL to answer before falling back to the remote one. */
-const PROBE_TIMEOUT = 2500;
+/**
+ * Local addresses (LAN) answer in milliseconds when you're home; when you're
+ * away they're unroutable and just hang, so keep this short.
+ */
+const LOCAL_PROBE_TIMEOUT = 2500;
+
+/**
+ * Remote addresses (e.g. a Tailscale `.ts.net` host) can be slow on the first
+ * hit over cellular: MagicDNS + WireGuard + TLS cold start. Give them room so a
+ * reachable remote isn't wrongly flagged offline.
+ */
+const REMOTE_PROBE_TIMEOUT = 7000;
+
+/** Debounce for the network-change re-probe: a single Wi-Fi -> cellular switch
+ * emits several expo-network updates in quick succession; coalesce them so we
+ * don't keep superseding an in-flight probe before it can finish. */
+const NETWORK_CHANGE_DEBOUNCE = 600;
 
 /** How often to re-probe while foregrounded, to catch VPN/network transitions. */
 const REPROBE_INTERVAL = 15000;
@@ -107,9 +122,9 @@ function buildPingParams(server: Server, serverAuth: ServerAuth) {
 }
 
 /** True if the URL answers /rest/ping within the timeout with a Subsonic response. */
-async function pingUrl(url: string, params: Record<string, string>): Promise<boolean> {
+async function pingUrl(url: string, params: Record<string, string>, timeout: number): Promise<boolean> {
     try {
-        const res = await axios.get(`${url}/rest/ping`, { params, timeout: PROBE_TIMEOUT });
+        const res = await axios.get(`${url}/rest/ping`, { params, timeout });
         const status = res.data?.['subsonic-response']?.status;
         return status === 'ok' || status === 'failed';
     } catch {
@@ -130,8 +145,10 @@ export default function ServerProvider({ children }: { children?: React.ReactNod
     // Always-fresh values for use inside listeners/probes without re-subscribing.
     const serverRef = useRef(server);
     const serverAuthRef = useRef(serverAuth);
+    const networkRef = useRef(network);
     serverRef.current = server;
     serverAuthRef.current = serverAuth;
+    networkRef.current = network;
 
     // Increments on each resolve so a slow probe can't override a newer result.
     const resolveIdRef = useRef(0);
@@ -164,25 +181,43 @@ export default function ServerProvider({ children }: { children?: React.ReactNod
             return;
         }
 
-        // Try the local URL first (home), then the remote one (e.g. Tailscale).
-        const candidates: { url: string; source: ActiveUrlSource }[] = [];
-        if (local) candidates.push({ url: local, source: 'local' });
-        if (remote) candidates.push({ url: remote, source: 'remote' });
-
         const params = buildPingParams(s, serverAuthRef.current);
         if (!params) {
-            // No credentials to probe yet — adopt the preferred URL optimistically.
-            return applyActiveUrl(candidates[0].url, candidates[0].source, null);
+            // No credentials to probe yet — adopt the preferred (local) URL optimistically.
+            const url = local || remote;
+            return applyActiveUrl(url, local ? 'local' : 'remote', null);
         }
 
         if (!silent) setConnection(c => ({ ...c, checking: true }));
-        for (const candidate of candidates) {
-            const ok = await pingUrl(candidate.url, params);
+
+        // Probe both URLs in parallel. Sequentially, a dead local address (a
+        // 192.168.x.x host just hangs until timeout when you're on cellular)
+        // would burn its whole timeout before the remote one is even tried, and
+        // a burst of network-change events could supersede the run before it got
+        // there. Firing both at once keeps the worst case at one timeout, while
+        // awaiting local first preserves "prefer local when both answer".
+        const localProbe = local ? pingUrl(local, params, LOCAL_PROBE_TIMEOUT) : Promise.resolve(false);
+        const remoteProbe = remote ? pingUrl(remote, params, REMOTE_PROBE_TIMEOUT) : Promise.resolve(false);
+
+        if (local) {
+            const localOk = await localProbe;
             if (runId !== resolveIdRef.current) return; // superseded by a newer resolve
-            if (ok) return applyActiveUrl(candidate.url, candidate.source, true);
+            if (localOk) return applyActiveUrl(local, 'local', true);
         }
-        // None reachable: keep the preferred URL active but flag the outage.
-        applyActiveUrl(candidates[0].url, candidates[0].source, false);
+        if (remote) {
+            const remoteOk = await remoteProbe;
+            if (runId !== resolveIdRef.current) return; // superseded by a newer resolve
+            if (remoteOk) return applyActiveUrl(remote, 'remote', true);
+        }
+
+        // Nothing reachable: flag the outage on the address that's most likely
+        // relevant. When we're away (not on Wi-Fi/Ethernet) show the remote one,
+        // so the failure message doesn't keep pointing at the unreachable LAN IP.
+        const netType = networkRef.current?.type;
+        const onLan = netType === NetworkStateType.WIFI || netType === NetworkStateType.ETHERNET;
+        if (!onLan && remote) applyActiveUrl(remote, 'remote', false);
+        else if (local) applyActiveUrl(local, 'local', false);
+        else applyActiveUrl(remote, 'remote', false);
     }, [applyActiveUrl, setConnectionIfChanged]);
 
     useEffect(() => {
@@ -244,9 +279,12 @@ export default function ServerProvider({ children }: { children?: React.ReactNod
     }, [isLoading, server.localUrl, server.remoteUrl, server.auth.username, server.auth.password, server.authMethod, serverAuth.hash, serverAuth.salt, resolveAndApply]);
 
     // Silent re-probe when the reported network changes (e.g. Wi-Fi -> cellular).
+    // Debounced because a single switch emits a burst of expo-network updates;
+    // coalescing them avoids restarting (and superseding) the probe repeatedly.
     useEffect(() => {
         if (isLoading) return;
-        resolveAndApply(true);
+        const t = setTimeout(() => resolveAndApply(true), NETWORK_CHANGE_DEBOUNCE);
+        return () => clearTimeout(t);
     }, [isLoading, network.isConnected, network.isInternetReachable, network.type, resolveAndApply]);
 
     // Foreground + periodic safety net. Network-type changes are not reported
