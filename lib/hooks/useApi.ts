@@ -11,6 +11,9 @@ export function useApi() {
         return params != null ? axios.create({
             baseURL: `${server.url}/rest/`,
             params,
+            // Fail fast on a dead address instead of hanging until the OS TCP
+            // timeout, which would let a stale request clobber the status later.
+            timeout: 15000,
         }) : null
     }, [server, params]);
 

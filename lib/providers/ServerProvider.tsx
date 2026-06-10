@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { createContext, useCallback, useEffect, useRef, useState } from 'react';
 import { AppState } from 'react-native';
-import { useNetworkState } from 'expo-network';
+import { useNetworkState, NetworkStateType } from 'expo-network';
 import { fixUrl, generateSubsonicToken } from '@lib/util';
 import { BaseResponse, DiscoverServerResult, OpenSubsonicExtensions } from '@lib/types';
 import config from '../constants/config';
@@ -35,10 +35,33 @@ export type ConnectionInfo = {
     source: ActiveUrlSource;
     /** True while a reachability probe is running. */
     checking: boolean;
+    /**
+     * Authoritative result of the last probe: true/false when a probe ran,
+     * null in legacy single-URL mode where data fetches drive the status.
+     */
+    reachable: boolean | null;
 };
 
-/** How long to wait for the local URL to answer before falling back to the remote one. */
-const PROBE_TIMEOUT = 2500;
+/**
+ * Local addresses (LAN) answer in milliseconds when you're home; when you're
+ * away they're unroutable and just hang, so keep this short.
+ */
+const LOCAL_PROBE_TIMEOUT = 2500;
+
+/**
+ * Remote addresses (e.g. a Tailscale `.ts.net` host) can be slow on the first
+ * hit over cellular: MagicDNS + WireGuard + TLS cold start. Give them room so a
+ * reachable remote isn't wrongly flagged offline.
+ */
+const REMOTE_PROBE_TIMEOUT = 7000;
+
+/** Debounce for the network-change re-probe: a single Wi-Fi -> cellular switch
+ * emits several expo-network updates in quick succession; coalesce them so we
+ * don't keep superseding an in-flight probe before it can finish. */
+const NETWORK_CHANGE_DEBOUNCE = 600;
+
+/** How often to re-probe while foregrounded, to catch VPN/network transitions. */
+const REPROBE_INTERVAL = 15000;
 
 export type ServerAuth = {
     salt?: string;
@@ -72,7 +95,7 @@ export type ServerContextType = {
 const initialServerContext: ServerContextType = {
     server: initialServer,
     serverAuth: {},
-    connection: { activeUrl: '', source: 'none', checking: false },
+    connection: { activeUrl: '', source: 'none', checking: false, reachable: null },
     discoverServer: () => { },
     saveAndTestPasswordCredentials: async () => { return false; },
     setServerUrls: () => { },
@@ -99,9 +122,9 @@ function buildPingParams(server: Server, serverAuth: ServerAuth) {
 }
 
 /** True if the URL answers /rest/ping within the timeout with a Subsonic response. */
-async function pingUrl(url: string, params: Record<string, string>): Promise<boolean> {
+async function pingUrl(url: string, params: Record<string, string>, timeout: number): Promise<boolean> {
     try {
-        const res = await axios.get(`${url}/rest/ping`, { params, timeout: PROBE_TIMEOUT });
+        const res = await axios.get(`${url}/rest/ping`, { params, timeout });
         const status = res.data?.['subsonic-response']?.status;
         return status === 'ok' || status === 'failed';
     } catch {
@@ -115,49 +138,87 @@ export default function ServerProvider({ children }: { children?: React.ReactNod
     const [server, setServer] = useState<Server>(initialServer);
     const [serverAuth, setServerAuth] = useState<ServerAuth>({});
     const [isLoading, setIsLoading] = useState(true);
-    const [connection, setConnection] = useState<ConnectionInfo>({ activeUrl: '', source: 'none', checking: false });
+    const [connection, setConnection] = useState<ConnectionInfo>({ activeUrl: '', source: 'none', checking: false, reachable: null });
 
     const network = useNetworkState();
 
     // Always-fresh values for use inside listeners/probes without re-subscribing.
     const serverRef = useRef(server);
     const serverAuthRef = useRef(serverAuth);
+    const networkRef = useRef(network);
     serverRef.current = server;
     serverAuthRef.current = serverAuth;
+    networkRef.current = network;
 
     // Increments on each resolve so a slow probe can't override a newer result.
     const resolveIdRef = useRef(0);
 
-    const applyActiveUrl = useCallback((url: string, source: ActiveUrlSource) => {
-        setServer(prev => (prev.url === url ? prev : { ...prev, url }));
-        setConnection({ activeUrl: url, source, checking: false });
+    // Only update connection state when something actually changed, so the
+    // periodic re-probe doesn't churn renders while the status is stable.
+    const setConnectionIfChanged = useCallback((next: ConnectionInfo) => {
+        setConnection(prev =>
+            prev.activeUrl === next.activeUrl && prev.source === next.source
+                && prev.checking === next.checking && prev.reachable === next.reachable
+                ? prev : next);
     }, []);
 
-    const resolveAndApply = useCallback(async () => {
+    const applyActiveUrl = useCallback((url: string, source: ActiveUrlSource, reachable: boolean | null) => {
+        setServer(prev => (prev.url === url ? prev : { ...prev, url }));
+        setConnectionIfChanged({ activeUrl: url, source, checking: false, reachable });
+    }, [setConnectionIfChanged]);
+
+    // silent: background re-probes (network change / foreground / polling) skip
+    // the "checking" flash so the UI doesn't flicker every cycle.
+    const resolveAndApply = useCallback(async (silent = false) => {
         const runId = ++resolveIdRef.current;
         const s = serverRef.current;
         const local = s.localUrl?.trim() || '';
         const remote = s.remoteUrl?.trim() || '';
 
-        // No dual config: keep whatever single URL we have (legacy / fresh login).
+        // Legacy single-URL setup: no probe, let data fetches drive the status.
         if (!local && !remote) {
-            setConnection({ activeUrl: s.url, source: s.url ? 'single' : 'none', checking: false });
+            setConnectionIfChanged({ activeUrl: s.url, source: s.url ? 'single' : 'none', checking: false, reachable: null });
             return;
         }
-        if (local && !remote) return applyActiveUrl(local, 'local');
-        if (!local && remote) return applyActiveUrl(remote, 'remote');
 
-        // Both set: try the local URL first, fall back to the remote one.
         const params = buildPingParams(s, serverAuthRef.current);
         if (!params) {
-            // Can't probe yet (no credentials) — prefer local optimistically.
-            return applyActiveUrl(local, 'local');
+            // No credentials to probe yet — adopt the preferred (local) URL optimistically.
+            const url = local || remote;
+            return applyActiveUrl(url, local ? 'local' : 'remote', null);
         }
-        setConnection(c => ({ ...c, checking: true }));
-        const localReachable = await pingUrl(local, params);
-        if (runId !== resolveIdRef.current) return; // superseded by a newer resolve
-        applyActiveUrl(localReachable ? local : remote, localReachable ? 'local' : 'remote');
-    }, [applyActiveUrl]);
+
+        if (!silent) setConnection(c => ({ ...c, checking: true }));
+
+        // Probe both URLs in parallel. Sequentially, a dead local address (a
+        // 192.168.x.x host just hangs until timeout when you're on cellular)
+        // would burn its whole timeout before the remote one is even tried, and
+        // a burst of network-change events could supersede the run before it got
+        // there. Firing both at once keeps the worst case at one timeout, while
+        // awaiting local first preserves "prefer local when both answer".
+        const localProbe = local ? pingUrl(local, params, LOCAL_PROBE_TIMEOUT) : Promise.resolve(false);
+        const remoteProbe = remote ? pingUrl(remote, params, REMOTE_PROBE_TIMEOUT) : Promise.resolve(false);
+
+        if (local) {
+            const localOk = await localProbe;
+            if (runId !== resolveIdRef.current) return; // superseded by a newer resolve
+            if (localOk) return applyActiveUrl(local, 'local', true);
+        }
+        if (remote) {
+            const remoteOk = await remoteProbe;
+            if (runId !== resolveIdRef.current) return; // superseded by a newer resolve
+            if (remoteOk) return applyActiveUrl(remote, 'remote', true);
+        }
+
+        // Nothing reachable: flag the outage on the address that's most likely
+        // relevant. When we're away (not on Wi-Fi/Ethernet) show the remote one,
+        // so the failure message doesn't keep pointing at the unreachable LAN IP.
+        const netType = networkRef.current?.type;
+        const onLan = netType === NetworkStateType.WIFI || netType === NetworkStateType.ETHERNET;
+        if (!onLan && remote) applyActiveUrl(remote, 'remote', false);
+        else if (local) applyActiveUrl(local, 'local', false);
+        else applyActiveUrl(remote, 'remote', false);
+    }, [applyActiveUrl, setConnectionIfChanged]);
 
     useEffect(() => {
         if (server.url == '') return;
@@ -211,18 +272,40 @@ export default function ServerProvider({ children }: { children?: React.ReactNod
         })();
     }, [server.auth.password, server.authMethod]);
 
-    // Re-resolve the active URL whenever the config, credentials or network change.
+    // Visible re-resolve on the initial load and when the config/credentials change.
     useEffect(() => {
         if (isLoading) return;
-        resolveAndApply();
-    }, [isLoading, server.localUrl, server.remoteUrl, server.auth.username, server.auth.password, server.authMethod, serverAuth.hash, serverAuth.salt, network.isConnected, network.isInternetReachable, network.type, resolveAndApply]);
+        resolveAndApply(false);
+    }, [isLoading, server.localUrl, server.remoteUrl, server.auth.username, server.auth.password, server.authMethod, serverAuth.hash, serverAuth.salt, resolveAndApply]);
 
-    // Re-probe when the app returns to the foreground (e.g. you got home / left).
+    // Silent re-probe when the reported network changes (e.g. Wi-Fi -> cellular).
+    // Debounced because a single switch emits a burst of expo-network updates;
+    // coalescing them avoids restarting (and superseding) the probe repeatedly.
     useEffect(() => {
+        if (isLoading) return;
+        const t = setTimeout(() => resolveAndApply(true), NETWORK_CHANGE_DEBOUNCE);
+        return () => clearTimeout(t);
+    }, [isLoading, network.isConnected, network.isInternetReachable, network.type, resolveAndApply]);
+
+    // Foreground + periodic safety net. Network-type changes are not reported
+    // when a VPN (Tailscale) goes up/down on the same underlying network, so we
+    // also re-probe on a timer while the app is in the foreground to catch
+    // Wi-Fi <-> VPN <-> cellular transitions.
+    useEffect(() => {
+        if (isLoading) return;
+        let interval: ReturnType<typeof setInterval> | null = null;
+        const startPolling = () => {
+            if (!interval) interval = setInterval(() => resolveAndApply(true), REPROBE_INTERVAL);
+        };
+        const stopPolling = () => {
+            if (interval) { clearInterval(interval); interval = null; }
+        };
         const sub = AppState.addEventListener('change', state => {
-            if (state === 'active' && !isLoading) resolveAndApply();
+            if (state === 'active') { resolveAndApply(true); startPolling(); }
+            else stopPolling();
         });
-        return () => sub.remove();
+        if (AppState.currentState === 'active') startPolling();
+        return () => { stopPolling(); sub.remove(); };
     }, [isLoading, resolveAndApply]);
 
     const setServerUrls = useCallback((localUrl: string, remoteUrl: string) => {
@@ -232,7 +315,7 @@ export default function ServerProvider({ children }: { children?: React.ReactNod
     }, []);
 
     const recheckConnection = useCallback(() => {
-        resolveAndApply();
+        resolveAndApply(false);
     }, [resolveAndApply]);
 
     const discoverServer = useCallback(async (url: string): Promise<DiscoverServerResult> => {
@@ -358,7 +441,7 @@ export default function ServerProvider({ children }: { children?: React.ReactNod
     const logOut = useCallback(async () => {
         setServer(initialServer);
         setServerAuth({});
-        setConnection({ activeUrl: '', source: 'none', checking: false });
+        setConnection({ activeUrl: '', source: 'none', checking: false, reachable: null });
         await SecureStore.deleteItemAsync('password');
         await AsyncStorage.removeItem('server');
     }, []);

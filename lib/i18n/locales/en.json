@@ -154,7 +154,8 @@
         "local": "Using local address",
         "remote": "Using remote address",
         "single": "Using server address",
-        "none": "No server configured"
+        "none": "No server configured",
+        "offline": "Can't reach the server"
       }
     },
     "persistQueue": {

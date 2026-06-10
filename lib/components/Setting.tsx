@@ -50,12 +50,14 @@ export default function Setting({ id, icon, label, description, type, options, d
         },
     }), [colors]);
 
-    useEffect(() => {
-        (async () => {
-            await AsyncStorage.setItem(`settings.${id}`, JSON.stringify(value));
-            emitSettingChange(id, value);
-        })();
-    }, [value, id]);
+    // Persist + broadcast only on an actual user change. Writing in a [value]
+    // effect would clobber the stored value with the default on mount, before
+    // the real value has hydrated (which made the theme/select flicker or reset).
+    const commit = useCallback((newValue: SettingValue) => {
+        setValue(newValue);
+        AsyncStorage.setItem(`settings.${id}`, JSON.stringify(newValue)).catch(() => { });
+        emitSettingChange(id, newValue);
+    }, [id]);
 
     const handlePress = useCallback(async () => {
         if (type == 'select') {
@@ -72,11 +74,11 @@ export default function Setting({ id, icon, label, description, type, options, d
                 }
             });
             if (newValue) {
-                setValue(newValue.value);
+                commit(newValue.value);
                 onValueChange?.(newValue.value);
             }
         }
-    }, [icon, label, description, value, options]);
+    }, [icon, label, description, value, options, commit]);
 
     const val = options?.find(o => o.value == value);
 
@@ -92,7 +94,7 @@ export default function Setting({ id, icon, label, description, type, options, d
                     thumbColor={colors.text[0]}
                     ios_backgroundColor={colors.segmentedControlBackground}
                     value={!!value}
-                    onValueChange={(value) => setValue(value)}
+                    onValueChange={(value) => commit(value)}
                 />}
                 {type == 'select' && <Title size={12} color={colors.text[1]}>{val?.shortLabel ?? val?.label}</Title>}
             </View>
